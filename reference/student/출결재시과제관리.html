@@ -1,0 +1,1109 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="google" content="notranslate">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+<title>심슨어학원에 오신 것을 환영합니다.</title>
+<link href="/css/style.css?version=20260821" type="text/css" rel="stylesheet" />
+<link href="/css/sliderkit-core.css" type="text/css" rel="stylesheet" />
+
+  <script src="/js/jquery-1.8.2.min.js" type="text/javascript"></script>
+
+<script src="/js/jquery.sliderkit.1.9.2.pack.js" type="text/javascript"></script>
+<script src="/js/jquery.mousewheel.min.js" type="text/javascript"></script>
+<script src="/js/jquery.easing.1.3.min.js" type="text/javascript"></script>
+<script src="/js/menu.js" type="text/javascript"></script>
+<script type="text/javascript" src="/js/jssor.core.js"></script>
+<script type="text/javascript" src="/js/jssor.utils.js"></script>
+<script type="text/javascript" src="/js/jssor.slider.js"></script>
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<script type="text/javascript">
+    function MM_showHideLayers() { //v9.0
+        var i, p, v, obj, args = MM_showHideLayers.arguments;
+        for (i = 0; i < (args.length - 2); i += 3)
+            with (document) if (getElementById && ((obj = getElementById(args[i])) != null)) {
+                v = args[i + 2];
+                if (obj.style) { obj = obj.style; v = (v == 'show') ? 'visible' : (v == 'hide') ? 'hidden' : v; }
+                obj.visibility = v;
+            }
+    }
+</script>
+</head>
+
+
+<script src="../Js/jquery.tooltip.js" type="text/javascript"></script>
+<link href="../css/jquery.tooltip.css" rel="stylesheet" type="text/css" />
+<script language="javascript">
+    $(document).ready(function () {
+
+
+        $('a').tooltip({ showURL: false, delay: 0, fade: 50, track: true, showBody: "@" });
+
+
+    })
+
+
+    function Facny_AttenceAlram(classidx, wdate) {
+        mpidx = '121694'
+
+        if (mpidx == "") {
+            alert("선택된 학생이 없습니다.");
+            return;
+
+        }
+
+        $.fancybox.open({
+            href: '/popup/popup_presence.aspx?classidx=' + classidx + '&wdate=' + wdate + '&mpidx=' + mpidx,
+            type: 'iframe',
+            width: 400,
+            padding: 5
+        });
+
+
+
+    }
+
+
+
+    function Facny_HomeWork(idx, wdate) {
+        yn = ''
+        if (yn == "1") {
+            alert("평가할 항목이 있습니다. 먼저 작성하신후 숙제를 보실수가 있습니다.");
+            fancy_gangList();
+            return;
+
+
+        }
+        studentidx = '121694'
+        classidx = '31497'
+        $.fancybox.open({
+            href: '/popup/popup_homework_check.aspx?classidx=' + classidx + '&wdate=' + wdate + '&studentidx=' + studentidx + '&idx=' + idx,
+            type: 'iframe',
+            width: 1300,
+            padding: 5
+        });
+
+
+
+    }
+    function summarygo() {
+        mpidx = '121694'
+
+        if (mpidx == "") {
+            alert("선택된 학생이 없습니다.");
+            return;
+
+        }
+
+        $.fancybox.open({
+            href: 'Paper_list.aspx?mpidx=' + mpidx,
+            type: 'iframe',
+            width: 1000,
+            padding: 5
+        });
+
+
+
+    }
+
+    function Reexam_go() {
+        mpidx = '121694'
+
+        if (mpidx == "") {
+            alert("선택된 학생이 없습니다.");
+            return;
+
+        }
+
+        $.fancybox.open({
+            href: '/popup/popup_reexam.aspx?mpidx=' + mpidx,
+            type: 'iframe',
+            width: 1000,
+            padding: 5
+        });
+
+
+
+    }
+
+
+
+    function classfileView(filename) {
+        classidx = '31497'
+
+        if (classidx == "") {
+            alert("선택된 반이 없습니다.");
+            return;
+
+        }
+
+        $.fancybox.open({
+            href: '/popup/class_Photo_View.aspx?classidx=' + classidx,
+            type: 'iframe',
+            width: 1000,
+            padding: 5
+        });
+
+    }
+
+    function fancy_gangList() {
+
+
+        $.fancybox.open({
+            href: '/Popup/popup_assesment_survey.aspx',
+            type: 'iframe',
+            padding: 5
+        });
+
+
+
+    }
+    function SitPlanClose() {
+
+    }
+
+    function photoviewout() {
+
+
+    }
+    function newstudentreport() {
+        mgidx = '55697'
+        window.open('/popup/popup_new_report_view.aspx?mgidx=' + mgidx, '', 'width=938,height=900,scrollbars=yes');
+        return false;
+    }
+
+    function levelTestGo(examidx) {
+
+        window.open('/popup/popup_level_test01_vac.aspx?examidx=' + examidx +'&mpidx=121694', 'leveltestgo', 'fullscreen=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,resizable=no');
+    }
+</script>
+
+
+<body class="myhomework">
+    <form method="post" action="./sub09_02.aspx" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwULLTE1OTgyMTg2MzIPZBYCAgEPZBYiAgUPEGQQFQEJ6rmA7KeA7ZWcFQEGMTIxNjk0FCsDAWcWAWZkAgYPFgIeBFRleHQFCOuwmOyImDoyZAIHDw8WAh4HVmlzaWJsZWhkZAIIDxYCHgtfIUl0ZW1Db3VudAIBFgJmD2QWAmYPFRAP6rSR7KeEQyjspJHrk7EpEeuwlOydtOy5vEEgTV4yNjA3FDIwMjYtMDctMjV+7IiY6rCV7KSRCeyblOyImOq4iCDsoJXqt5wg7KSR65OxX0FkdmFuY2VkX+yblOyImOq4iI8B7LWc7ISc7JewW+uLtOyehF0oUkMpLOy1nOyEnOyXsFvruYTri7TsnoRdKEdyYW1tYXIpLOyGoe2YnOyglVvruYTri7TsnoRdKE5ld3MpLOygleyLnOyYqFvruYTri7TsnoRdKERlYmF0ZSks6rSR7KeELeq0gOumrFvruYTri7TsnoRdKG1lbnRvcmluZykGMzYwMDAwAzE4MAnquYDsp4DtlZwP7JaR7KeE7KSR7ZWZ6rWQBOykkTIG64+E67O0AA0wMTAtNzE0NS05MDg2DTAxMC0yNTQyLTkwODYBIGQCCQ8WAh8CAgEWAmYPZBYCZg8VBgIwOAE3ATcBMAEwATBkAgoPFgIfAgIBFgJmD2QWAmYPFQMCMDgBMQExZAILDxYCHwJmZAIMDxYCHwJmZAINDxYCHwICARYCZg9kFgJmDxUDCeq5gOyngO2VnAoyMDI2LTA4LTI2A+yImGQCDg8WAh8ABRLsmKTripjsnqzsi5zsl4bsnYxkAg8PFgIfAmZkAhEPEGQQFRIEMjAwOQQyMDEwBDIwMTEEMjAxMgQyMDEzBDIwMTQEMjAxNQQyMDE2BDIwMTcEMjAxOAQyMDE5BDIwMjAEMjAyMQQyMDIyBDIwMjMEMjAyNAQyMDI1BDIwMjYVEgQyMDA5BDIwMTAEMjAxMQQyMDEyBDIwMTMEMjAxNAQyMDE1BDIwMTYEMjAxNwQyMDE4BDIwMTkEMjAyMAQyMDIxBDIwMjIEMjAyMwQyMDI0BDIwMjUEMjAyNhQrAxJnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cWAQIRZAISDxBkEBUMAjAxAjAyAjAzAjA0AjA1AjA2AjA3AjA4AjA5AjEwAjExAjEyFQwCMDECMDICMDMCMDQCMDUCMDYCMDcCMDgCMDkCMTACMTECMTIUKwMMZ2dnZ2dnZ2dnZ2dnFgECB2QCFQ8QZBAVAhHrsJTsnbTsubxBIE1eMjYwNxTrj5nslYQo7JykKTJBIE1eMjYwORUCBTMxNDk3BTMxNjcwFCsDAmdnFgFmZAIWDw8WAh8BaGRkAhcPFgIfAWhkAhgPFgIfAWgWAmYPFgIfAmZkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYDBRBoZWFkZXIxJGltZ0xvZ2luBQxJbWFnZUJ1dHRvbjEFDEltYWdlQnV0dG9uMjRRYB6lQCVVjXs/W/fTb32VF1uwmIHgcpn6fqdOPBPs" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=p4hJhUbDWBWx0gbnYVOZEvIJr-w3TKHXsnCjMlAgd99_0iw_d_BLr1kbKS7qyzhn1IEZuAqZ0-pgHnjdBldRrKi96pfSlqxuhzc1QUwuyk41&amp;t=639192220340000000" type="text/javascript"></script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="87FDE5ED" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdACxtA8pWoD9tjLy4XYSVSAOqzwixhKYhfl50+gxHhDzTYapS4Y7z+T4JBlc18mAaLWaNuuACuA/6/VSDUqwDH1ZLLBV5LaSNGh7smZtWmwS48wE4q82tKZHZqqwJ7VLmDITpkAKvHlFmeWUpJ6tT4i4qukLEctkd9maFQ4VkbZFq+YHx41Z0oA0fHBNDGolQmbgaC1B27z6kfkot1qVudEHe+tHwBwJVVq4CKZ+vq7dfEpQQm0iRj38J5jwkRdi5uboGtOXjj+Kha/ZLWQWIfvw7SEq4gs545RjUa74E7DBCibxwIlimOzX++pWL4CrDrRUxavv2OgYT8ZVlUi/ZcVdCVwhgASBnZr4SLAxHK3DASU9ShzqhNNX5ImlyXN6rwWlAVtYMgXp9RhM+6puqbQWYmk1Xss+ce6Mh4zh3tD2a/Ep+XXLtbAQQ6TJxSZGYopNjzJKlLQXpwWswxY8HbzDimCw/nzuBEGRI8AzYaS9bIJw5zQOPcXG9cRYDY7X4R88Wfh3GJMp48iDGNqfmTv/2vU88sDAgpaQkdDgB06kS0um1wYdxcAUZ4Kv2Le2Tc8tPk7xa1xAgXVWu8oh4EmOafwD+bcn0s2uTg1ZHYrXS6n5gah938IEn+sZwe+cXley+0XzkenCtdjOYMbjd6+mpzprtvFAxXVbCB/dHNfpJAOtsp9AeqhDZ6mBbtAVZNjtCeYm312OZljzQej2xKQG/UnwQqwA7aAjdSgE8Xapa/jI2LW1AQOmcIDObbjx7B7eIxlNIVTkygxufcRq5cHhLbZPT4vQN7i4xJpDzUxkR2hktqIShYff+r3ZW7e6RFsFCZOc+TGA4CrrdiJVjmLCmYs1X7aZmCc4CU0bkNVODW5ad939w7IA9jsvjNlX4TemSABK1T1D9B2ypKRPTWQryxe7Hcz4pL4Sti3GpAnnPFXCLaEpRHgRO9JCKpcIFuNDuKdD/aNYSKWsynknODiPI" />
+</div>
+        <div id="wrapper">
+            
+<div id="header">
+	<div id="top">
+		<div class="left_top">
+			<div id="branch_top">
+				<script src="../js/jquery.fancybox.js" type="text/javascript"></script>
+				<link href="../css/jquery.fancybox.css" rel="stylesheet" type="text/css" />
+				<script type="text/javascript">
+					function fancy_loginSearch() {
+						$.fancybox.open({
+							href: '/Popup/popup_id_pass_find.aspx',
+							type: 'iframe',
+							padding: 5
+						});
+					}
+
+					jQuery(document).ready(function () {
+						var fadeSpeed = 500;
+
+						$("#fl_menu").click(
+							function () { //mouse over
+								$('#fl_menu .label').fadeTo(fadeSpeed, 1);
+								$("#fl_menu .menu").slideDown();
+								clickyn = "0"
+							}
+						);
+						$("#fl_menu").mouseleave(
+							function () { //mouse over
+
+								$('#fl_menu .label').fadeTo(fadeSpeed, 10);
+								$("#fl_menu .menu").slideUp();
+								clickyn = "0"
+							}
+						);
+
+					});
+				</script>
+
+				<!-- 150102 수정추가 시작 -->
+				<script type="text/javascript">
+					$(document).ready(function () {
+						$('#link01').mouseenter(function () {
+							if ($('#subLink01').css('display') != 'block') {
+								$('#subLink01').show();
+							}
+
+						});
+						$('#link01').mouseleave(function () {
+							$('#subLink01').hide();
+						});
+
+						$('#link02').mouseenter(function () {
+							if ($('#subLink02').css('display') != 'block') {
+								$('#subLink02').show();
+							}
+
+						});
+						$('#link02').mouseleave(function () {
+							$('#subLink02').hide();
+						});
+
+						$('#link10').mouseenter(function () {
+							if ($('#subLink10').css('display') != 'block') {
+								$('#subLink10').show();
+							}
+
+						});
+						$('#link10').mouseleave(function () {
+							$('#subLink10').hide();
+						});
+
+					});
+				</script>
+				<div class="left_link">
+					<div id="fl_menu">
+						<div class="label">
+							<a class="roll" href="#">
+								<img src="/images/btn/btn_branch_off.gif" /><img class="over" src="/images/btn/btn_branch_on.gif" /></a>
+						</div>
+						<div class="menu">
+							<div class="telLayer2">
+								<ul>
+									<li id="link01">
+										<div id="subLink01" class="subLink">
+											<ul>
+												<li class="evenList"><a href="/b_index.aspx?groupidx=16" class="linkBtn2"><span class="wine2">비바키즈관</span> : <span class="blueN">02-455-3320</span></a></li>
+												<li><a href="/b_index.aspx?groupidx=2" class="linkBtn2"><span class="wine2">초등관</span>(은석5층) : <span class="blueN">02-444-3320</span></a></li>
+												<li class="evenList"><a href="/b_index.aspx?groupidx=1" class="linkBtn2"><span class="wine2">중1관</span>(은석6층) : <span class="blueN">02-444-3321</span></a></li>
+												<li><a href="/b_index.aspx?groupidx=1" class="linkBtn2"><span class="wine2">중2관</span>(은석6층) : <span class="blueN">02-444-3329</span></a></li>
+												<li class="evenList"><a href="/b_index.aspx?groupidx=1" class="linkBtn2"><span class="wine2">중3관</span>(베르디) : <span class="blueN">02-444-3329</span></a></li>
+												<li><a href="/b_index.aspx?groupidx=5" class="linkBtn2"><span class="wine2">고등관</span>(카리타스) : <span class="blueN">02-444-3323</span></a></li>
+											</ul>
+										</div>
+										<div class="arrowBox">
+											<img src="../images/etc/ani_arrow.gif" alt="화살표" />
+										</div>
+										<a class="linkBtn" href="#"><span class="telLink"><span class="wine2">광진</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="greenN">마우스를 올려보세요.</span></span></a>
+									</li>
+									<li id="link02" class="evenList">
+										<div id="subLink02" class="subLink">
+											<ul>
+												<li class="evenList"><a href="/b_index.aspx?groupidx=25" class="linkBtn2"><span class="wine2">초등관</span>(5층) : <span class="blueN">02-421-3320</span></a></li>
+												<li><a href="/b_index.aspx?groupidx=26" class="linkBtn2"><span class="wine2">중/고등관</span>(4층) : <span class="greenN">02-421-3358</span></a></li>
+											</ul>
+										</div>
+										<div class="arrowBox">
+											<img src="../images/etc/ani_arrow.gif" alt="화살표" />
+										</div>
+										<a class="linkBtn" href="#"><span class="telLink"><span class="wine2">잠실새내</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="greenN">마우스를 올려보세요.</span></span></a>
+									</li>
+									<li id="link12"><a class="linkBtn" href="/b_index.aspx?groupidx=27"><span class="telLink"><span class="wine2">잠실르엘</span>캠퍼스<span class="Mwine">(초,중)</span><br />
+										<span class="blueN">02-424-3321</span></span></a></li>
+									<li id="link03"><a class="linkBtn" href="/b_index.aspx?groupidx=6"><span class="telLink"><span class="wine2">자양</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+										<span class="blueN">02-444-3328</span></span></a></li>
+									<!--<li id="link04" class="evenList"><a class="evenList linkBtn" href="http://www.esimson.net/b_index.aspx?groupidx=4"><span class="telLink"><span class="wine2">서초</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+										<span class="blueN">02-3476-3320</span></span></a></li>-->
+									<!-- 150810 추가 시작 -->
+									<li id="link05"><a class="linkBtn" href="/b_index.aspx?groupidx=7"><span class="telLink"><span class="wine2">중계</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+										<span class="blueN">02-931-3321</span></span></a></li>
+									<!-- 150810 추가 끝 -->
+									<!-- 160804 추가 시작 -->
+									<li id="link06" class="evenList">
+										<a class="linkBtn" href="/b_index.aspx?groupidx=11"><span class="telLink"><span class="wine2">위례</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="blueN">02-449-3321</span></span></a>
+									</li>
+									<li id="link07" class="evenList">
+										<a class="linkBtn" href="/b_index.aspx?groupidx=14"><span class="telLink"><span class="wine2">미사</span>캠퍼스<span class="Mwine">(초,중)</span><br />
+											<span class="blueN">02-429-3321</span></span></a>
+									</li>
+									<li id="link08" class="evenList">
+										<a class="linkBtn" href="/b_index.aspx?groupidx=15"><span class="telLink"><span class="wine2">강동</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="blueN">02-429-3320</span></span></a>
+									</li>
+									<li id="link09" class="evenList">
+										<a class="linkBtn" href="/b_index.aspx?groupidx=17"><span class="telLink"><span class="wine2">구리</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="blueN">031-563-3321</span></span></a>
+									</li>
+									<li id="link10" class="evenList">
+										<div id="subLink10" class="subLink">
+											<ul>
+												<li class="evenList"><a href="/b_index.aspx?groupidx=22" class="linkBtn2"><span class="wine2">초등관</span>(7층) : <span class="blueN">02-2294-3321</span></a></li>
+												<li><a href="/b_index.aspx?groupidx=28" class="linkBtn2"><span class="wine2">중/고등관</span>(3층) : <span class="greenN">02-2294-3321</span></a></li>
+											</ul>
+										</div>
+										<div class="arrowBox">
+											<img src="../images/etc/ani_arrow.gif" alt="화살표" />
+										</div>
+										<a class="linkBtn" href="#"><span class="telLink"><span class="wine2">성동</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="greenN">마우스를 올려보세요.</span></span></a>
+									</li>
+									<li id="link11" class="evenList">
+										<a class="linkBtn" href="/b_index.aspx?groupidx=24"><span class="telLink"><span class="wine2">대치</span>캠퍼스<span class="Mwine">(초,중,고)</span><br />
+											<span class="blueN">02-556-3321</span></span></a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<div class="clear"></div>
+				</div>
+				<!-- 150102 수정추가 끝 -->
+			</div>
+			<div id="slogan_top">
+				<script type="text/javascript">
+					function tick2() {
+						$('#ticker_02 li:first').slideUp(function () { $(this).appendTo($('#ticker_02')).slideDown(); });
+					}
+					setInterval(function () { tick2() }, 3000);
+
+					function ChkLogin() {
+
+						if (document.getElementById("header1_txtloginid").value == "") {
+							alert("ID을 넣어 주세요");
+							document.getElementById("header1_txtloginid").focus();
+							return false;
+						}
+						if (document.getElementById("header1_txtloginpwd").value == "") {
+							alert("패스워드을 넣어 주세요");
+							document.getElementById("header1_txtloginpwd").focus();
+							return false;
+						}
+						return true;
+
+					}
+
+					function logout() {
+
+						if (confirm("정말로 로그아웃 하시겠습니까?") == true) {
+							location.href = "/logout.aspx"
+						}
+					}
+				</script>
+				<ul id="ticker_02" class="ticker">
+					<li>
+						<img src="/images/etc/img_slogan01.jpg" alt="NEWS &amp; DEBATE 심슨어학원" /></li>
+					<li>
+						<img src="/images/etc/img_slogan02.jpg" alt="Great Teaching &amp More!" /></li>
+					<li>
+						<img src="/images/etc/img_slogan03.jpg" alt="Work Hard No Short Cut!" /></li>
+					<li>
+						<img src="/images/etc/img_slogan04.jpg" alt="Believe in Whatever!" /></li>
+				</ul>
+			</div>
+			<div id="selected"><a href="/b_index.aspx?groupidx=1" class="branch">광진캠퍼스(중등관)</a></div>
+		</div>
+		<div class="right_top">
+			<ul>
+				
+
+				<li><a href="/mypage/sub09_14.aspx">
+					<img src="/images/btn/btn_mem_modify.gif" width="40" height="12" alt="정보수정" /></a></li>
+
+				
+				<li><a href="/member/recruit.aspx">
+					<img src="/images/btn/btn_recruit_top.gif" width="40" height="12" alt="인사모집" /></a></li>
+				<li><a href="/community/sub05_05.aspx">
+					<img src="/images/btn/btn_sitemap_top.gif" width="41" height="12" alt="사이트맵" /></a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="clear"></div>
+	<h1><a href="/index.aspx">The Simson School</a></h1>
+	<!-- 네비게이션 시작 -->
+	<div class="navi">
+		<ul class="depth1">
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi01_off.gif" /><img class="over" src="/images/btn/btn_navi01_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi02_off.gif" /><img class="over" src="/images/btn/btn_navi02_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi03_off.gif" /><img class="over" src="/images/btn/btn_navi03_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi04_off.gif" /><img class="over" src="/images/btn/btn_navi04_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi05_off.gif" /><img class="over" src="/images/btn/btn_navi05_on.gif" /></a></li>
+			<!--<li class="gnb1"><a class="roll" href="#"><img src="/images/btn/btn_navi06_off.gif"  /><img class="over" src="/images/btn/btn_navi06_on.gif"  /></a></li>-->
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi07_off.gif" /><img class="over" src="/images/btn/btn_navi07_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi08_off.gif" /><img class="over" src="/images/btn/btn_navi08_on.gif" /></a></li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi09_off.gif" /><img class="over" src="/images/btn/btn_navi09_on.gif" /></a></li>
+		</ul>
+	</div>
+	<div class="nav">
+		<ul class="depth1">
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi01_off.gif" /><img class="over" src="/images/btn/btn_navi01_on.gif" /></a><br />
+				<ul class="depth2">
+					<!--<li><a href="#" id="mem_modify">교육이념</a></li>-->
+					<li><a href="../academy/sub01_01.aspx">학원히스토리</a></li>
+					<li><a href="/academy/sub01_02.aspx">학생지원시스템</a></li>
+					<li><a href="../academy/sub01_03.aspx">학원시설</a></li>
+					<li><a href="/academy/sub01_04.aspx">셔틀안내</a></li>
+					<li><a href="/academy/sub01_05.aspx">찾아오시는길</a></li>
+					<li><a href="../academy/sub01_06b.aspx">심슨성과</a></li>
+					<li><a href="/academy/sub01_07.aspx">심슨영상</a></li>
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="/program/sub02_main.aspx">
+				<img src="/images/btn/btn_navi02_off.gif" /><img class="over" src="/images/btn/btn_navi02_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="/program/sub02_01.aspx">심슨초등</a></li>
+					<li><a href="/program/sub02_02.aspx">심슨중등</a></li>
+					<li><a href="/program/sub02_03.aspx">심슨고등</a></li>
+
+					<li><a href="/program/sub02_04.aspx">포트폴리오</a></li>
+					<li><a href="/program/sub02_05.aspx">심슨인터뷰</a></li>
+					<li><a href="/program/sub02_06.aspx">심슨콘테스트</a></li>
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi03_off.gif" /><img class="over" src="/images/btn/btn_navi03_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="/admission/sub03_01.aspx">입학절차</a></li>
+					<!--<li><a href="#">테스트준비사항</a></li>-->
+					<li><a href="/admission/sub03_03.aspx">신입생숙지사항</a></li>
+					<li><a href="/admission/sub03_04.aspx">재원생내규</a></li>
+					<li><a href="/admission/sub03_05.aspx">장학및회계규정</a></li>
+					<li><a href="/admission/sub03_06.aspx">교습비안내</a></li>
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi04_off.gif" /><img class="over" src="/images/btn/btn_navi04_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="../booking/sub04_01.aspx">특강예약</a></li>
+					<li><a href="../booking/sub04_02.aspx">정규과정예약</a></li>
+					<!--<li><a href="#">설명회예약</a></li>
+        		<li><a href="#">모의니트예약</a></li>-->
+					<li><a href="../booking/sub04_03.aspx">설명회/기타예약</a></li>
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="../community/sub05_01.aspx">
+				<img src="/images/btn/btn_navi05_off.gif" /><img class="over" src="/images/btn/btn_navi05_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="/community/sub05_01.aspx">공지사항</a></li>
+					<li><a href="/community/sub05_08.aspx">맞춤특강</a></li>
+					<li><a href="/community/sub05_06.aspx">입시/교육정보</a></li>
+					<li><a href="/community/sub05_07.aspx">내신경향분석</a></li>
+					<li><a href="/community/sub05_03.aspx">언론보도</a></li>
+					<li><a href="/community/sub05_04.aspx">학원소식</a></li>
+					<li><a href="/community/sub05_02.aspx">Help DESK</a></li>
+					<li><a href="#">Site Map</a></li>
+				</ul>
+			</li>
+			<!--<li class="gnb1"><a class="roll" href="#"><img src="/images/btn/btn_navi06_off.gif"  /><img class="over" src="/images/btn/btn_navi06_on.gif"  /></a><br/>
+	  			<ul class="depth2">
+        		<li><a href="#">특목중</a></li>
+        		<li><a href="#">특목고</a></li>
+                <li><a href="#">대입</a></li>
+                <li><a href="#">수상</a></li>
+      			</ul>
+    		</li>-->
+			<li class="gnb1"><a class="roll" href="#">
+				<img src="/images/btn/btn_navi07_off.gif" /><img class="over" src="/images/btn/btn_navi07_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="../schedule/sub07_01.aspx">학사일정</a></li>
+					<li><a href="../schedule/sub07_02.aspx">학원행사</a></li>
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="../dataroom/sub08_00.aspx">
+				<img src="/images/btn/btn_navi08_off.gif" /><img class="over" src="/images/btn/btn_navi08_on.gif" /></a><br />
+				<ul class="depth2">
+					<li><a href="../dataroom/sub08_00.aspx">통합자료실</a></li>
+					<!--<li><a href="../dataroom/sub08_01.aspx">뉴스자료실</a></li>-->
+					<li><a href="../dataroom/sub08_02.aspx">리딩자료실</a></li>
+					<li><a href="../dataroom/sub08_03.aspx">에세이자료실</a></li>
+					<li><a href="../dataroom/sub08_04.aspx">단어자료실</a></li>
+					<li><a href="../dataroom/sub08_05.aspx">수능자료실</a></li>
+					<li><a href="/dataroom/sub08_06.aspx">LC자료실</a></li>
+					<li><a href="/dataroom/sub08_07.aspx">내신자료실</a></li>
+					<!--<li><a href="/dataroom/sub08_08.aspx">단어학습</a></li>-->
+				</ul>
+			</li>
+			<li class="gnb1"><a class="roll" href="../mypage/sub09_main.aspx">
+				<img src="/images/btn/btn_navi09_off.gif" /><img class="over" src="/images/btn/btn_navi09_on.gif" /></a><br />
+				<ul class="depth2">
+					<!-- 로그인 전 메뉴 -->
+					
+					<!-- 로그인 후 메뉴 -->
+					<!-- 로그인 후 메뉴 -->
+					<li><a href="../mypage/sub09_01.aspx">나의공지</a></li>
+					<li><a href="../mypage/sub09_02.aspx">과제통합관리</a></li>
+					<li><a href="/mypage/sub09_12.aspx">성적조회</a></li>
+					<li><a href="/mypage/sub09_03.aspx">수강료&amp;교재</a></li>
+					<li><a href="/mypage/sub09_13.aspx">포트폴리오</a></li>
+					<li><a href="/mypage/sub09_06.aspx">나의포인트</a></li>
+
+					
+				</ul>
+			</li>
+		</ul>
+	</div>
+	<!-- 네비게이션 끝 -->
+	<!-- 서브 로그인 전 시작 -->
+	
+<!-- 서브 로그인 전 끝 -->
+<!-- 서브로그인 이후 시작 -->
+<div id="login_box">
+	<div id="logintable">
+		<table width="780" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+					<p><span class="wine1">&bull;</span> <b>김지한학생</b>(광진C(중등)) 환영합니다.</p>
+				</td>
+				<td>
+					<div class="boxtable2">
+						<table width="100%" border="0" cellspacing="0" cellpadding="0">
+							<colgroup>
+								<col style="width: 70px;" />
+								<col style="width: 70px;" />
+								<col />
+							</colgroup>
+							<tr>
+
+
+								<td>
+									<img src="/images/etc/title_mynotice.gif" alt="공지" />
+									<a href="/mypage/sub09_01.aspx" class="Dp2">
+										</a>건</td>
+
+								
+								<td>
+									<img src="/images/etc/title_mypoint.gif" alt="포인트" />
+									<a href="/mypage/sub09_06.aspx" class="Dp2">284</a></td>
+							</tr>
+						</table>
+					</div>
+				</td>
+				<!--<td><a href="#"><img src="../images/btn/btn_sub_special_class.gif" width="95" height="26" alt="특강신청" /></a></td>-->
+				<td><a href="/mypage/sub09_04.aspx">
+					<img src="/images/btn_teacher_counsel.jpg" width="109" height="26" alt="선생님상담" /></a></td>
+
+
+				<td><a href="javascript:logout()">
+					<img src="../images/btn/btn_sub_logout.gif" width="95" height="26" alt="로그아웃" /></a></td>
+
+			</tr>
+		</table>
+	</div>
+</div>
+<!-- 서브로그인 이후 끝 -->
+</div>
+     <!-- 헤더 끝 -->
+<!-- 헤더 끝 -->
+
+<!-- 서브로그인 이후 끝 -->
+</div>
+     <!-- 헤더 끝 -->
+
+            <!-- subContent 시작 -->
+            <div id="subContent">
+                <!-- sideContent 시작 -->
+                <div id="sideContent">
+                    
+		<!-- submenu 시작 -->
+      	<div class="submenu">
+        	<div id="menu_title09"><a href="../mypage/sub09_main.aspx" class="btn"><span>MY심슨</span></a></div>
+            <ul>
+            <li><a class="roll" href="../mypage/sub09_01.aspx"><img src="/images/btn/btn_sub_menu09_04_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_04_on.jpg"  /></a></li>
+            <!--<li><a class="roll" href="#"><img src="/images/btn/btn_sub_menu09_05_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_05_on.jpg"  /></a></li>
+            <li><a class="roll" href="#"><img src="/images/btn/btn_sub_menu09_06_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_06_on.jpg"  /></a></li>-->
+            <li><a class="roll" href="../mypage/sub09_02.aspx"><img src="/images/btn/btn_sub_menu09_02_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_02_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_12.aspx"><img src="/images/btn/btn_sub_menu09_09_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_09_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_03.aspx"><img src="/images/btn/btn_sub_menu09_07_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_07_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_13.aspx"><img src="/images/btn/btn_sub_menu09_10_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_10_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_16.aspx"><img src="/images/btn/btn_sub_menu09_19_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_19_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_06.aspx"><img src="/images/btn/btn_sub_menu09_08_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_08_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_11.aspx"><img src="/images/btn/btn_sub_menu09_15_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_15_on.jpg"  /></a></li>
+            
+            <li><a class="roll" href="../mypage/sub09_10.aspX"><img src="/images/btn/btn_sub_menu09_11_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_11_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_07.aspx"><img src="/images/btn/btn_sub_menu09_12_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_12_on.jpg"  /></a></li>
+            <li><a class="roll" href="../mypage/sub09_08.aspx"><img src="/images/btn/btn_sub_menu09_14_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_14_on.jpg"  /></a></li>
+            <!--<li><a class="roll" href="#"><img src="/images/btn/btn_sub_menu09_13_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_13_on.jpg"  /></a></li>-->
+            <li><a class="roll" href="/mypage/sub09_09.aspx"><img src="/images/btn/btn_sub_menu09_13_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_13_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_04.aspx"><img src="/images/btn/btn_sub_menu09_16_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_16_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_15.aspx"><img src="/images/btn/btn_sub_menu09_18_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_18_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_14.aspx"><img src="/images/btn/btn_sub_menu09_01_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_01_on.jpg"  /></a></li>
+            <!--<li><a class="roll" href="#"><img src="/images/btn/btn_sub_menu09_03_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_03_on.jpg"  /></a></li>-->
+            <li><a class="roll" href="/mypage/sub09_17.aspx"><img src="/images/btn/btn_sub_menu09_20_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_20_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_18.aspx"><img src="/images/btn/btn_sub_menu09_21_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_21_on.jpg"  /></a></li>
+            <!--<li><a class="roll" href="/mypage/sub09_19.aspx"><img src="/images/btn/btn_sub_menu09_22_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_22_on.jpg"  /></a></li>-->
+            <!--<li><a class="roll" href="/mypage/sub09_20.aspx"><img src="/images/btn/btn_sub_menu09_23_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_23_on.jpg"  /></a></li>-->
+            <li><a class="roll" href="/mypage/sub09_21.aspx"><img src="/images/btn/btn_sub_menu09_24_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_24_on.jpg"  /></a></li>
+            <li><a class="roll" href="/mypage/sub09_22.aspx"><img src="/images/btn/btn_sub_menu09_25_off.jpg"  /><img class="over" src="/images/btn/btn_sub_menu09_25_on.jpg"  /></a></li>
+            </ul>
+        </div>
+        <!-- submenu 끝 -->
+                </div>
+                <!-- sideContent 끝 -->
+                <!-- rightContent 시작 -->
+                <div id="rightContent">
+                    <div id="legendary">
+                        <ul>
+                            <li>&gt; MY심슨 &gt; <b>출결/재시/과제통합관리</b> </li>
+                        </ul>
+                    </div>
+                    <div id="sub_title09_03"></div>
+                    <input type="hidden" name="Hgang" id="Hgang" />
+                    <input type="hidden" name="HMpIdx" id="HMpIdx" value="121694" />
+                    <input type="hidden" name="HMgIdx" id="HMgIdx" value="55697" />
+                    <div class="search_box">
+                        학생선택 
+                        <select name="cmbstudent" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;cmbstudent\&#39;,\&#39;\&#39;)&#39;, 0)" id="cmbstudent">
+	<option selected="selected" value="121694">김지한</option>
+
+</select>
+                        &nbsp;&nbsp;&nbsp;         
+                        <span class="green1">
+                            반수:2</span> &nbsp;
+                        
+                        &nbsp;
+                    </div>
+                    <script type="text/javascript">
+                        $(document).ready(function () {
+                            $(".title_info a").mouseenter(function () {
+                                if ($(".content_info").css("display") != "block") {
+                                    $(".content_info").fadeIn(500);
+                                }
+                            });
+                            $(".title_info a").mouseleave(function () {
+                                $(".content_info").fadeOut(500);
+                            });
+                        })
+                    </script>
+                    <div class="title_info">
+                        <a href="#">
+                            <img src="../images/etc/title_info.gif" /></a>
+                        <div id="info_copy"></div>
+                    </div>
+                    
+                            <div class="content_info">
+                                <div id="left_info">
+
+                                    <div class="boardlisttable3">
+                                        <table width="100%" border="0" cellspacing="5" cellpadding="0">
+                                            <colgroup>
+                                                <col style="width: 120px;" />
+                                                <col />
+                                            </colgroup>
+                                            <tr>
+                                                <th>관명</th>
+                                                <td>광진C(중등)</td>
+                                            </tr>
+                                            <tr>
+                                                <th>반명</th>
+                                                <td>바이칼A M^2607 (2026-07-25~수강중)</td>
+                                            </tr>
+                                            <tr>
+                                                <th>수업요일</th>
+                                                <td>월수금</td>
+                                            </tr>
+                                            <!--<tr><th>과정</th><td>정규 중등_Advanced_월수금</td></tr>-->
+                                            <tr>
+                                                <th>선생님</th>
+                                                <td>최서연[담임](RC),최서연[비담임](Grammar),송혜정[비담임](News),정시온[비담임](Debate),광진-관리[비담임](mentoring)</td>
+                                            </tr>
+                                            <tr>
+                                                <th>수강료</th>
+                                                <td>360000원</td>
+                                            </tr>
+                                            <!--<tr><th>수업시간</th><td>180</td></tr>-->
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="right_info">
+                                    <div class="boardlisttable3">
+                                        <table width="100%" border="0" cellspacing="5" cellpadding="0">
+                                            <colgroup>
+                                                <col style="width: 120px;" />
+                                                <col />
+                                            </colgroup>
+                                            <tr>
+                                                <th>이름</th>
+                                                <td>김지한</td>
+                                            </tr>
+                                            <tr>
+                                                <th>학교</th>
+                                                <td>양진중학교</td>
+                                            </tr>
+                                            <tr>
+                                                <th>학년</th>
+                                                <td>중2</td>
+                                            </tr>
+                                            <tr>
+                                                <th>학원이동수단</th>
+                                                <td>도보</td>
+                                            </tr>
+                                            <tr>
+                                                <th>할인</th>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <th>학생휴대폰</th>
+                                                <td>010-7145-9086</td>
+                                            </tr>
+                                            <tr>
+                                                <th>학부모휴대폰</th>
+                                                <td>010-2542-9086</td>
+                                            </tr>
+                                            <tr>
+                                                <th>주소</th>
+                                                <td> </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                    <div class="content_box">
+                        <div class="boardlisttable4">
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <colgroup>
+                                    <col />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 9%;" />
+                                </colgroup>
+
+                                
+                                        <tr>
+                                            <th><span class="FSBK20">08</span>월 출석횟수</th>
+                                            <td><span class="FSBK20">7</span>회</td>
+                                            <th><span class="FSB20">출석</span></th>
+                                            <td><span class="FSB20">7</span>회</td>
+                                            <th><span class="FSR20">결석</span></th>
+                                            <td><span class="FSR20">0</span>회</td>
+                                            <th><span class="FSPP20">지각</span></th>
+                                            <td><span class="FSPP20">0</span>회</td>
+                                            <th><span class="FSGR20">조퇴</span></th>
+                                            <td><span class="FSGR20">0</span>회</td>
+                                        </tr>
+                                    
+                            </table>
+                        </div>
+                        <div class="boardlisttable4">
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <colgroup>
+                                    <col style="width: 15%;" />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 9%;" />
+                                    <col style="width: 10%;" />
+                                    <col />
+                                </colgroup>
+                                
+                                        <tr>
+                                            <th><span class="FSBK20">08</span>월 재시횟수</th>
+                                            <td><span class="FSBK20">1</span>회</td>
+                                            <th><span class="FSB20">합격횟수</span></th>
+                                            <td><span class="FSB20">1</span>회</td>
+                                            <th><span class="FSDG20">비고</span></th>
+
+                                    
+
+
+                                <td>
+                                    <p>
+                                        
+                                    </p>
+                                </td>
+                                </tr>
+
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <div class="scheduleBox">
+                        <div class="title"><span class="Tname">김지한</span> 학생이 반드시 알아야할 학생맞춤 정보 입니다.</div>
+                        <div class="link"><a href="/mypage/sub09_01.aspx">
+                            <img src="/images/btn/btn_more4.gif" alt="더보기" /></a></div>
+                        <div class="clear"></div>
+                        <div class="list_box">
+                            <script type="text/javascript">
+                                function tick2() {
+                                    $('#ticker_03 li:first').slideUp(function () { $(this).appendTo($('#ticker_03')).slideDown(); });
+                                }
+                                setInterval(function () { tick2() }, 3000);
+                            </script>
+                            <ul id="ticker_03" class="ticker2">
+                                
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- 학원일정보기 끝-->
+                    <!-- 140217 재시수 시작-->
+                    <div class="reexamBoxTop"></div>
+                    <div class="reexamBoxMd">
+                        <div class="reexamTitle">
+                            
+                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td><span class="Tname">김지한</span> 학생 <span class="FSWH216">오늘[2026-08-26(수)] 의 재시</span><span class='white'>
+                                            [[
+                                
+                            오늘재시없음
+                            ]]</span></td>
+    <td align="right"><a href="javascript:Reexam_go()">
+        <img src="../images/btn/btn_more5.gif" alt="더보기" /></a></td>
+                            </tr>
+</table>
+
+            
+                        </div>
+                        <div class="boardlisttable16">
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <colgroup>
+                                    <col />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 17%;" />
+                                    <col style="width: 20%;" />
+                                </colgroup>
+                                <tr>
+                                    <th>재시항목</th>
+                                    <th>참석여부</th>
+                                    <th>재시참석(합격)시간</th>
+                                    <th>재시수/합격수</th>
+                                </tr>
+                                
+                            </table>
+
+                        </div>
+
+                    </div>
+                    <div class="reexamBoxBt"></div>
+                    <!-- 140217 재시수 끝 -->
+
+                    <div class="schedule_box">
+                        <div id="schedule_md">
+                            <div id="schedule_top"></div>
+                            <div class="schedule_title">
+
+                                <input type="image" name="ImageButton1" id="ImageButton1" alt="이전달버튼" src="../images/btn/btn_pre_month.jpg" />
+
+                                <select name="cmbyear" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;cmbyear\&#39;,\&#39;\&#39;)&#39;, 0)" id="cmbyear" style="width: 80px; font-size: 16px;">
+	<option value="2009">2009</option>
+	<option value="2010">2010</option>
+	<option value="2011">2011</option>
+	<option value="2012">2012</option>
+	<option value="2013">2013</option>
+	<option value="2014">2014</option>
+	<option value="2015">2015</option>
+	<option value="2016">2016</option>
+	<option value="2017">2017</option>
+	<option value="2018">2018</option>
+	<option value="2019">2019</option>
+	<option value="2020">2020</option>
+	<option value="2021">2021</option>
+	<option value="2022">2022</option>
+	<option value="2023">2023</option>
+	<option value="2024">2024</option>
+	<option value="2025">2025</option>
+	<option selected="selected" value="2026">2026</option>
+
+</select>
+                                <select name="cmbmonth" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;cmbmonth\&#39;,\&#39;\&#39;)&#39;, 0)" id="cmbmonth" style="width: 80px; font-size: 16px">
+	<option value="01">01</option>
+	<option value="02">02</option>
+	<option value="03">03</option>
+	<option value="04">04</option>
+	<option value="05">05</option>
+	<option value="06">06</option>
+	<option value="07">07</option>
+	<option selected="selected" value="08">08</option>
+	<option value="09">09</option>
+	<option value="10">10</option>
+	<option value="11">11</option>
+	<option value="12">12</option>
+
+</select>
+
+                                <input name="txtDate" type="text" id="txtDate" class="textarea_mem2" value="2026-08" />
+
+                                <input type="image" name="ImageButton2" id="ImageButton2" alt="다음달버튼" src="../images/btn/btn_next_month.jpg" />
+                                &nbsp;&nbsp;&nbsp;&nbsp; <a href="javascript:summarygo()">
+                                    <img src="/images/btn/btn_summary.jpg" /></a>
+                            </div>
+
+                            반선택             
+            <span id="optban" style="display:inline-block;background-color:#FFFFCC;border-color:#FF6600;border-style:Groove;"><span style="color:black;"><input id="optban_0" type="radio" name="optban" value="31497" checked="checked" /><label for="optban_0">바이칼A M^2607</label></span><span style="color:black;"><input id="optban_1" type="radio" name="optban" value="31670" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;optban$1\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="optban_1">동아(윤)2A M^2609</label></span></span>
+                            <span style="font-size: 14px; color: Blue">현재 선택반은</span>: <span style="font-size: 16px; color: Red; font-weight: bold">바이칼A M^2607 </span>
+
+                            <a href="javascript:fancy_gangList()">
+                                </a>
+
+
+
+                            <!-- 클래스모토 및 사진 시작-->
+                            
+
+                            <!-- 클래스모토 및 사진 끝-->
+                            <!-- 150720 추가 시작 -->
+                            
+
+                            <!-- 150720 추가 끝 -->
+                            <div id="howeview" class="schedulelisttable">
+                                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                    <colgroup>
+                                        <col style="width: 15%;" />
+                                        <col style="width: 14%;" />
+                                        <col style="width: 14%;" />
+                                        <col style="width: 14%;" />
+                                        <col style="width: 14%;" />
+                                        <col style="width: 14%;" />
+                                        <col />
+                                    </colgroup>
+                                    <tr>
+                                        <th>
+                                            <img src="/images/etc/title_sunday.gif" width="49" height="10" alt="일요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_monday.gif" width="51" height="10" alt="월요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_tuesday.gif" width="54" height="10" alt="화요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_wednesday.gif" width="74" height="10" alt="수요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_thursday.gif" width="63" height="10" alt="목요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_friday.gif" width="42" height="10" alt="금요일" /></th>
+                                        <th>
+                                            <img src="/images/etc/title_saturday.gif" width="63" height="10" alt="토요일" /></th>
+                                    </tr>
+
+                                    <tr><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td ><span class='blue'>01</span><br/><br/></td></tr><tr><td ><span class='red'>02</span><br/><br/></td><td>03<br/><br/><a href="javascript:Facny_HomeWork('620018','20260803')" title='최서연선생님(RC)=>R/C<br/>송혜정선생님(News)=>뉴스'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td>04<br/><br/></td><td>05<br/><br/><a href="javascript:Facny_HomeWork('620916','20260805')" title='최서연선생님(Grammar)=>기타<br/>송혜정선생님(News)=>뉴스'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td>06<br/><br/></td><td>07<br/><br/><a href="javascript:Facny_HomeWork('621494','20260807')" title='정시온선생님(Debate)=>기타<br/>최서연선생님(Grammar)=>기타'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td ><span class='blue'>08</span><br/><br/></td></tr><tr><td ><span class='red'>09</span><br/><br/></td><td>10<br/><br/><a href="javascript:Facny_HomeWork('621604','20260810')" title='최서연선생님(RC)=>R/C<br/>송혜정선생님(News)=>뉴스'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td>11<br/><br/></td><td>12<br/><br/></td><td>13<br/><br/></td><td>14<br/><br/></td><td ><span class='blue'>15</span><br/><br/></td></tr><tr><td ><span class='red'>16</span><br/><br/></td><td>17<br/><a href='#' title='온라인모의고사@최서연(RC)합격<br/>[중등] 2026 2학년 8호 33회 모의고사 A' /> <img src='/images/btn/btn_reexam_pass.gif'  style='margin-bottom:3px;' alt='재시통과여부' /></a><br/><a href="javascript:Facny_HomeWork('622045','20260817')" title='최서연선생님(RC)=>R/C'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a></td><td>18<br/><br/></td><td>19<br/><br/><a href="javascript:Facny_HomeWork('622552','20260819')" title='최서연선생님(Grammar)=>기타<br/>송혜정선생님(News)=>뉴스'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td>20<br/><br/></td><td>21<br/><br/><a href="javascript:Facny_HomeWork('623089','20260821')" title='[학부모님 학생숙제 확인필요]<br/>정시온선생님(Debate)=>Writing<br/>최서연선생님(Grammar)=>기타'/> <img src='/images/btn/btn_homework_icon.gif' style='margin-bottom:3px;' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td ><span class='blue'>22</span><br/><br/></td></tr><tr><td ><span class='red'>23</span><br/><br/></td><td>24<br/><br/><a href="javascript:Facny_HomeWork('623207','20260824')" title='최서연선생님(RC)=>R/C<br/>송혜정선생님(News)=>뉴스'/> <img src='/images/btn/btn_homework_icon_off.gif' style='margin-bottom:3px;'  alt='숙제확인' /></a><img src='/images/btn/btn_attendance.gif'  style='margin-bottom:3px;' alt='출석' /></td><td>25<br/><br/></td><td  class='dayBefore'>26<br/><br/></td><td>27<br/><br/></td><td>28<br/><br/></td><td ><span class='blue'>29</span><br/><br/></td></tr><tr><td ><span class='red'>30</span><br/><br/></td><td>31<br/><br/></td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td><td>&nbsp; </td></tr>
+                                </table>
+                            </div>
+
+
+                            <div id="schedule_bt"></div>
+                        </div>
+                        <div id="icon_box">
+                            * <span class="wine">
+                                <img src="/images/btn/btn_absentee_notice.gif" /></span>은 학부모님이 선생님한테 학생이 <span class="B">지각이나 결석할시 알려주는곳</span> 입니다.<br />
+                            <br />
+                            * <span class="wine">
+                                <img src='/images/btn/btn_homework_icon.gif' style='margin-bottom: 3px;' /></span>&nbsp;&nbsp;&nbsp;&nbsp;은 학부모님이 학생의 숙제를 <span class="B">확인하고 선생님한테 알려주는  숙제</span> 입니다.
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+                <!-- rightContent 끝 -->
+                <div class="clear"></div>
+            </div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+//]]>
+</script>
+</form>
+    
+<!-- Footer 시작 -->
+<div id="footer">
+	<div id="footer_box">
+
+
+		<div style="float: left; width: 970px; height: 18px; margin: 20px 0 0 0px; text-align: left;">
+			<ul>
+				<li style="display: inline; margin-right: 20px;"><span style="color: #535353; text-decoration: none; font-size: 13px;"><b>대표번호 : 1855-3321</b></span></li>
+				<li style="display: inline; margin-right: 20px;"><a href="http://blog.naver.com/hkshim" target="_blank" style="color: #535353; text-decoration: none; font-size: 13px;"><b>블로그</b></a></li>
+				<li style="display: inline; margin-right: 20px;"><a href="/member/privacy.aspx" style="color: #535353; text-decoration: none; font-size: 13px;"><b>개인정보취급방침</b></a></li>
+				<li style="display: inline; margin-right: 20px;"><a href="/member/termsofuse.aspx" style="color: #535353; text-decoration: none; font-size: 13px;"><b>이용약관</b></a></li>
+				<li style="display: inline; margin-right: 20px;"><a href="#" style="color: #535353; text-decoration: none; font-size: 13px;"><b>이메일무단수집거부</b></a></li>
+			</ul>
+		</div>
+		<div style="float: right; width: 100px; height: 18px; margin: 0px 40px 0 0;">
+			<select id="ddlFamily" name="ddlFamily" onchange="goFamily();">
+				<option>:::패밀리사이트:::</option>
+				<option value="1">비바키즈</option>
+				<!--<option value="2">심슨진학연구소</option>-->
+			</select><br />
+			<br />
+			<a href="http://helpu.kr/simson/" target="_blank">
+				<img src="http://helpu.co.kr/images/sample_banner/banner_sample2_2.gif" alt="원격지원서비스" />
+			</a>
+		</div>
+		<div class="clear"></div>
+		<script type="text/javascript">
+
+			//심슨 주소/전화번호 팝업 적용
+			$(document).ready(function () {
+				$("#addressBtn").click(function (e) { // 150826 재수정
+					e.preventDefault();
+					if ($(".addressLayer").css("display") != "block") {
+						$(".addressLayer").show();
+					}
+				});
+				$(".closeBtn").click(function (e) {
+					e.preventDefault();
+					$(".addressLayer").hide();
+				});
+
+			})
+
+			function goFamily() {
+				if ($("#ddlFamily").val() == "2") {
+					window.open("http://www.simson.ac", "family", "");
+				}
+				else if ($("#ddlFamily").val() == "1") {
+					window.open("https://www.bibakids.co.kr", "family", "");
+				}
+			}
+		</script>
+		<div style="position: relative; float: left; margin: 0px 0 0 0px; text-align: left;">
+			 심슨어학보습학원 &nbsp; 학원등록번호 : 제2400호 서울시 광진구 아차산로 506, 5층,6층 (학교교과교습학원, 외국어,보습,진학지도)<br /> 광진심슨어학원 &nbsp; 학원등록번호 : 제1905호 서울시 광진구 광나루로 604, 3층,4층 (학교교과교습학원,외국어,보습)<br /><br /> (주)심슨교육 &nbsp; 등록번호 : 206-86-44236 대표:심호길 [04974]서울특별시 광진구 아차산로 502(광장동) 502호 통신판매업신고번호:제2015-서울광진-0820<br /> (주)심슨파트너스 &nbsp;등록번호 : 631-81-00837 대표:심호길 ☏1855-3321 서울특별시 광진구 광나루로 604 302호 통신판매업신고번호:제2026-서울광진-1152<br />
+			Mail address : comjangii@naver.com&nbsp;&nbsp;
+              Copyrightⓒ SIMSON LANGUAGE INSTITUTE All Rights Reserved
+		</div>
+	</div>
+</div>
+<!-- Footer 끝 -->
+</div>
+</body>
+</html>
