@@ -13,10 +13,12 @@
   const isCounselListPage = location.pathname.toLowerCase() === "/mypage/sub09_04.aspx";
   const isCounselDetailPage = location.pathname.toLowerCase() === "/mypage/sub09_04_view.aspx";
   const isCounselWritePage = location.pathname.toLowerCase() === "/mypage/sub09_04_write.aspx";
+  const isLoginPage = ["/member/member_login.aspx", "/member/login.aspx"].includes(location.pathname.toLowerCase());
   const isStudentPage = location.pathname.toLowerCase().startsWith("/mypage/");
+  const isLegacyStudentPage = isStudentPage && !isStudentDashboard && !isGradesPage && !isGradeDetailPage && !isPointsPage && !isCounselListPage && !isCounselDetailPage && !isCounselWritePage;
   const isVocaHelperPage = new Set(["/exam/high_voca_start.aspx", "/exam/high_voca01_test.aspx", "/exam/high_voca02_test.aspx"]).has(location.pathname.toLowerCase());
   const MOCK_EXAM_PREVIEW = false;
-  const hasModernPage = isHome || isStudentDashboard || isGradesPage || isGradeDetailPage || isPointsPage || isCounselListPage || isCounselDetailPage || isCounselWritePage || isHomeworkPopup;
+  const hasModernPage = isHome || isLoginPage || isStudentDashboard || isGradesPage || isGradeDetailPage || isPointsPage || isCounselListPage || isCounselDetailPage || isCounselWritePage || isLegacyStudentPage || isHomeworkPopup;
   const supportsModernHeader = !isHomeworkPopup && !hasModernPage && Boolean(document.querySelector("#header .nav, #header .navi"));
   const supportsModernUi = hasModernPage || supportsModernHeader;
   const originalNodes = Array.from(document.body.children);
@@ -28,6 +30,35 @@
   };
 
   const clean = (value) => (value || "").replace(/\s+/g, " ").trim();
+  function storageGet(keys, callback) {
+    try {
+      if (!chrome?.runtime?.id || !chrome.storage?.local) return;
+      chrome.storage.local.get(keys, (result) => {
+        try { if (chrome.runtime.lastError) return; callback(result || {}); } catch {}
+      });
+    } catch {}
+  }
+  function storageSet(values) {
+    try {
+      if (!chrome?.runtime?.id || !chrome.storage?.local) return;
+      chrome.storage.local.set(values, () => { try { void chrome.runtime.lastError; } catch {} });
+    } catch {}
+  }
+  let legacyActionSequence = 0;
+  function triggerLegacyNode(node, preferredId = "") {
+    if (!node) return false;
+    const target = node.closest?.("a,button,input,[onclick]") || node;
+    const source = `${target.getAttribute?.("href") || ""} ${target.getAttribute?.("onclick") || ""}`;
+    if (/javascript\s*:|\bonclick\s*=|[\w$.]+\s*\(/i.test(source)) {
+      const id = preferredId || target.getAttribute("data-better-esimson-action") || `legacy-action-${++legacyActionSequence}`;
+      target.setAttribute("data-better-esimson-action", id);
+      document.documentElement.setAttribute("data-better-esimson-click-target", id);
+      document.dispatchEvent(new Event("better-esimson-page-click"));
+      return true;
+    }
+    if (typeof target.click === "function") { target.click(); return true; }
+    return false;
+  }
   function showToast(message, tone="success") {
     let region=document.getElementById("better-esimson-toasts");
     if(!region){ region=document.createElement("div"); region.id="better-esimson-toasts"; region.setAttribute("role","region"); region.setAttribute("aria-live","polite"); region.setAttribute("aria-label","Better Esimson 알림"); document.body.appendChild(region); }
@@ -57,6 +88,33 @@
     label: clean(node?.textContent) || clean(node?.querySelector("img")?.alt),
     href: absolute(node?.getAttribute("href") || "#"),
   });
+
+  function readAuthState() {
+    const candidates = [
+      document.querySelector("#login .my_box p")?.textContent,
+      document.querySelector("#login_box p b")?.textContent,
+      document.querySelector("#login_box b")?.textContent
+    ].map(clean).filter(Boolean);
+    const joined = candidates.join(" ");
+    const koreanName = joined.match(/([가-힣]{2,5})\s*학생/)?.[1];
+    const fallback = candidates[0]?.replace(/^[•·\s]+/, "").replace(/\s*학생.*$/, "").replace(/님.*$/, "").trim();
+    const loggedIn = Boolean(koreanName || fallback || document.querySelector('#login_box a[href*="logout" i],#login_box [onclick*="logout" i],#login .my_box'));
+    return { loggedIn, name: koreanName || fallback || "학생" };
+  }
+
+  function headerAuthMarkup(auth) {
+    if (!auth.loggedIn) return `<div class="be-header-actions be-auth-guest"><a class="be-header-join" href="/member/step01.aspx">회원가입</a><a class="be-primary-small" href="/member/member_login.aspx">로그인</a></div>`;
+    return `<div class="be-header-actions be-auth-user"><a class="be-student-system-link" href="/mypage/sub09_02.aspx"><span>학생시스템</span>${icon("arrow")}</a><button class="be-site-theme" type="button" aria-label="화면 모드">◐</button><button class="be-site-user" type="button" aria-expanded="false"><i>${escapeHtml(auth.name.slice(0,1))}</i><strong>${escapeHtml(auth.name)}</strong>${icon("chevron")}</button><div class="be-site-profile-menu" hidden><a href="/mypage/sub09_14.aspx">개인정보 수정</a><button type="button" data-site-logout>로그아웃</button></div></div>`;
+  }
+
+  function bindSiteHeader(scope) {
+    const user = scope.querySelector(".be-site-user");
+    const menu = scope.querySelector(".be-site-profile-menu");
+    user?.addEventListener("click", (event) => { event.stopPropagation(); const open = menu.hidden; menu.hidden = !open; user.setAttribute("aria-expanded", String(open)); });
+    menu?.addEventListener("click", (event) => event.stopPropagation());
+    document.addEventListener("click", () => { if (menu && !menu.hidden) { menu.hidden = true; user?.setAttribute("aria-expanded", "false"); } });
+    scope.querySelector("[data-site-logout]")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
+  }
 
   function readMockExam(doc = document, view = window) {
     const layer = doc.getElementById("mogosa");
@@ -93,7 +151,8 @@
 
     const list = (selector) => Array.from(document.querySelectorAll(`${selector} li > a`)).slice(0, 4).map(linkData).filter((item) => item.label);
     const userBox = document.querySelector("#login .my_box");
-    const userName = clean(userBox?.querySelector("p")?.textContent).replace(/^[•\s]+/, "");
+    const auth = readAuthState();
+    const userName = auth.loggedIn ? auth.name : "";
     const noticeCount = clean(userBox?.querySelector(".notice")?.textContent).replace(/\D/g, "") || "0";
     const point = clean(userBox?.querySelector(".point")?.textContent).replace(/\D/g, "") || "0";
     const campuses = Array.from(document.querySelectorAll(".left_link .linkBtn"))
@@ -106,7 +165,7 @@
       .slice(0, 12);
     const month = clean(document.querySelector(".calendar_top li")?.textContent);
 
-    return { nav, userName, noticeCount, point, campuses, month, notices: list("#notice_box2"), classes: list("#spc_box3"), events: list("#event_box2"), mockExam: readMockExam() };
+    return { nav, auth, userName, noticeCount, point, campuses, month, notices: list("#notice_box2"), classes: list("#spc_box3"), events: list("#event_box2"), mockExam: readMockExam() };
   }
 
   const icon = (name) => ({
@@ -140,24 +199,24 @@
       <header class="be-header">
         <a class="be-brand" href="/index.aspx" aria-label="심슨어학원 홈"><img src="${textLogo}" alt="SIMSON Language Institute"></a>
         <nav class="be-nav" aria-label="주 메뉴">
-          ${data.nav.map((item, index) => `<div class="be-nav-group"><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>${item.children.length ? `<div class="be-dropdown">${item.children.map((child) => `<a href="${escapeHtml(child.href)}">${escapeHtml(child.label)}</a>`).join("")}</div>` : ""}</div>`).join("")}
+          ${data.nav.filter((item)=>item.label!=="마이페이지").map((item) => `<div class="be-nav-group"><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>${item.children.length ? `<div class="be-dropdown">${item.children.map((child) => `<a href="${escapeHtml(child.href)}">${escapeHtml(child.label)}</a>`).join("")}</div>` : ""}</div>`).join("")}
         </nav>
-        <div class="be-header-actions"><a href="/community/sub05_02.aspx">문의하기</a><a class="be-primary-small" href="${loggedIn ? "/mypage/sub09_02.aspx" : "/member/step01.aspx"}">${loggedIn ? "학생 시스템" : "회원가입"}</a></div>
+        ${headerAuthMarkup(data.auth || readAuthState())}
         <button class="be-mobile-menu" type="button" aria-label="메뉴 열기">${icon("grid")}</button>
       </header>
       <main>
         <section class="be-hero">
           <div class="be-hero-glow"></div>
-          <div class="be-hero-copy"><span class="be-eyebrow">Simson Language Institute</span><h1>Work Hard.<br><em>No Short Cut.</em></h1><p>수험 영어를 넘어, 더 넓은 세상을 보는 힘을 기릅니다.</p><div class="be-hero-actions"><a class="be-button be-button-light" href="/program/sub02_main.aspx">교육과정 살펴보기 ${icon("arrow")}</a><a class="be-button be-button-ghost" href="/admission/sub03_01.aspx">입학 안내 ${icon("arrow")}</a></div></div>
+          <div class="be-hero-copy"><span class="be-eyebrow">Simson Language Institute</span><h1>Work Hard.<br><em>No Short Cut.</em></h1><p>수험 영어를 넘어, 더 넓은 세상을 보는 힘을 기릅니다.</p><div class="be-hero-actions"><a class="be-button be-button-light" href="/academy/sub01_01.aspx">학원 소개 ${icon("arrow")}</a><a class="be-button be-button-ghost" href="/admission/sub03_01.aspx">입학 안내 ${icon("arrow")}</a></div></div>
           <div class="be-hero-number"><strong>20<sup>+</sup></strong><span>함께 성장해 온 시간</span></div>
         </section>
-        <section class="be-quick">
-          <a href="/booking/sub04_02.aspx"><span>01</span><strong>정규과정 예약</strong><small>수업 상담과 등록을 시작하세요</small>${icon("arrow")}</a>
-          <a href="/booking/sub04_01.aspx"><span>02</span><strong>특강 예약</strong><small>시기에 맞는 특별 프로그램</small>${icon("arrow")}</a>
-          <a href="/schedule/sub07_01.aspx"><span>03</span><strong>학사일정</strong><small>${escapeHtml(data.month || "이번 달")} 일정을 확인하세요</small>${icon("arrow")}</a>
-          <a href="/dataroom/sub08_00.aspx"><span>04</span><strong>통합자료실</strong><small>학습에 필요한 자료를 한곳에서</small>${icon("arrow")}</a>
+        <section class="be-quick be-reveal">
+          <a href="/academy/sub01_01.aspx"><span>01</span><strong>학원 소개</strong><small>심슨의 교육 철학과 이야기를 만나보세요</small>${icon("arrow")}</a>
+          <a href="/program/sub02_main.aspx"><span>02</span><strong>교육과정</strong><small>학년과 목표에 맞는 과정을 살펴보세요</small>${icon("arrow")}</a>
+          <a href="/admission/sub03_01.aspx"><span>03</span><strong>입학 안내</strong><small>상담부터 등록까지 차근차근 안내합니다</small>${icon("arrow")}</a>
+          <a href="/community/sub05_01.aspx"><span>04</span><strong>커뮤니티</strong><small>공지와 최신 학원 소식을 확인하세요</small>${icon("arrow")}</a>
         </section>
-        <section class="be-dashboard">
+        <section class="be-dashboard be-reveal">
           <div class="be-feed">
             <div class="be-section-head"><div><span class="be-kicker">SIMSON UPDATE</span><h2>새로운 소식</h2></div><a href="/community/sub05_01.aspx">전체보기 ${icon("arrow")}</a></div>
             <div class="be-tabs" role="tablist"><button class="is-active" data-feed="notices">공지사항</button><button data-feed="classes">맞춤특강</button><button data-feed="events">심슨행사</button></div>
@@ -165,11 +224,9 @@
             <div class="be-feed-list" data-list="classes" hidden>${renderLinks(data.classes, "진행 중인 맞춤특강이 없습니다.")}</div>
             <div class="be-feed-list" data-list="events" hidden>${renderLinks(data.events, "등록된 행사가 없습니다.")}</div>
           </div>
-          <aside class="be-account ${loggedIn ? "is-user" : ""}">
-            ${loggedIn ? `<span class="be-kicker">MY SIMSON</span><h2>${escapeHtml(data.userName)}</h2><p>오늘도 한 걸음 성장할 준비가 되었나요?</p><div class="be-stats"><a href="/mypage/sub09_01.aspx"><strong>${escapeHtml(data.noticeCount)}</strong><span>나의 공지</span></a><a href="/mypage/sub09_06.aspx"><strong>${escapeHtml(data.point)}</strong><span>포인트</span></a></div><div class="be-account-links"><a href="/mypage/sub09_02.aspx">과제 확인 ${icon("arrow")}</a><a href="/mypage/sub09_12.aspx">성적 조회 ${icon("arrow")}</a></div><button class="be-logout" type="button">로그아웃</button>${mockExamButton(data.mockExam, "be-mock-exam-home")}` : `<span class="be-kicker">MEMBER LOGIN</span><h2>다시 만나 반가워요</h2><p>로그인하고 과제, 성적, 포인트를 한눈에 확인하세요.</p><label>아이디<input id="be-user-id" type="text" autocomplete="username" placeholder="아이디를 입력하세요"></label><label>비밀번호<input id="be-user-pw" type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요"></label><button class="be-login" type="button">로그인</button><div class="be-login-links"><a href="/member/step01.aspx">회원가입</a><button class="be-find-account" type="button">ID/PW 찾기</button></div>`}
-          </aside>
         </section>
-        <section class="be-campus"><div class="be-section-head"><div><span class="be-kicker">OUR CAMPUS</span><h2>가까운 캠퍼스를 찾아보세요</h2></div><p>대표번호 <a href="tel:18553321">1855-3321</a></p></div><div class="be-campus-grid">${data.campuses.map((item) => `<a href="${escapeHtml(item.href)}"><span>${escapeHtml(item.label)}</span>${icon("arrow")}</a>`).join("")}</div></section>
+        <section class="be-programs be-reveal"><div class="be-programs-copy"><span class="be-kicker">THE SIMSON METHOD</span><h2>성적을 넘어,<br>스스로 공부하는 힘까지</h2><p>학생의 현재 수준과 목표를 세심하게 살피고, 수업·과제·평가가 자연스럽게 이어지는 학습 흐름을 설계합니다.</p><a class="be-program-link" href="/program/sub02_main.aspx">교육과정 알아보기 ${icon("arrow")}</a></div><div class="be-program-grid"><a href="/program/sub02_01.aspx"><span>01</span><strong>초등 과정</strong><p>영어의 기본 감각과 학습 습관을 함께 만듭니다.</p></a><a href="/program/sub02_02.aspx"><span>02</span><strong>중등 과정</strong><p>내신과 수능을 연결하는 탄탄한 실력을 기릅니다.</p></a><a href="/program/sub02_03.aspx"><span>03</span><strong>고등 과정</strong><p>목표 대학을 향한 정교한 전략과 밀도 높은 학습.</p></a></div></section>
+        <section class="be-campus be-reveal"><div class="be-section-head"><div><span class="be-kicker">OUR CAMPUS</span><h2>가까운 캠퍼스를 찾아보세요</h2></div><p>대표번호 <a href="tel:18553321">1855-3321</a></p></div><div class="be-campus-grid">${data.campuses.map((item) => `<a href="${escapeHtml(item.href)}"><span>${escapeHtml(item.label)}</span>${icon("arrow")}</a>`).join("")}</div></section>
       </main>
       ${footerMarkup()}`;
     document.body.appendChild(root);
@@ -177,19 +234,41 @@
   }
 
   function renderLegacyModernHeader(data) {
-    const legacyName=clean(document.querySelector("#login_box p b")?.textContent).replace(/학생$/,""), loggedIn=Boolean(legacyName||document.querySelector('#login_box a[href*="logout" i],#login_box [onclick*="logout" i]'));
+    const auth=readAuthState();
     const header=document.createElement("div");
     header.className="be-legacy-modern-header";
     header.hidden=true;
-    header.innerHTML=`<header class="be-header"><a class="be-brand" href="/index.aspx" aria-label="심슨어학원 홈"><img src="${textLogo}" alt="SIMSON Language Institute"></a><nav class="be-nav" aria-label="주 메뉴">${data.nav.map((item)=>`<div class="be-nav-group"><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>${item.children.length?`<div class="be-dropdown">${item.children.map((child)=>`<a href="${escapeHtml(child.href)}">${escapeHtml(child.label)}</a>`).join("")}</div>`:""}</div>`).join("")}</nav><div class="be-header-actions"><a href="/community/sub05_02.aspx">문의하기</a><a class="be-primary-small" href="${loggedIn?"/mypage/sub09_02.aspx":"/member/login.aspx"}">${loggedIn?(legacyName||"학생 시스템"):"로그인"}</a></div><button class="be-mobile-menu" type="button" aria-label="메뉴 열기">${icon("grid")}</button></header>`;
+    header.innerHTML=`<header class="be-header"><a class="be-brand" href="/index.aspx" aria-label="심슨어학원 홈"><img src="${textLogo}" alt="SIMSON Language Institute"></a><nav class="be-nav" aria-label="주 메뉴">${data.nav.filter((item)=>item.label!=="마이페이지").map((item)=>`<div class="be-nav-group"><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>${item.children.length?`<div class="be-dropdown">${item.children.map((child)=>`<a href="${escapeHtml(child.href)}">${escapeHtml(child.label)}</a>`).join("")}</div>`:""}</div>`).join("")}</nav>${headerAuthMarkup(auth)}<button class="be-mobile-menu" type="button" aria-label="메뉴 열기">${icon("grid")}</button></header>`;
     (document.getElementById("wrapper")||document.body.firstElementChild)?.before(header);
     const footer=document.createElement("div"); footer.className="be-legacy-footer-host"; footer.hidden=true; footer.innerHTML=footerMarkup("be-legacy-modern-footer");
     const legacyFooter=document.getElementById("footer");
     if(legacyFooter)legacyFooter.before(footer); else document.body.appendChild(footer);
     header.querySelector(".be-mobile-menu")?.addEventListener("click",()=>header.querySelector(".be-nav")?.classList.toggle("is-open"));
+    bindSiteHeader(header);
+  }
+
+  function renderLegacyStudentChrome() {
+    const data=readStudentDashboard();
+    const studentName=data.students.find((item)=>item.selected)?.label||data.studentInfo?.["이름"]||readAuthState().name||"학생";
+    const activeIndex=data.menu.findIndex((item)=>{ try{return new URL(item.href,location.href).pathname.toLowerCase()===location.pathname.toLowerCase();}catch{return false;} });
+    const activeLabel=data.menu[activeIndex]?.label||clean(document.querySelector("#legendary b")?.textContent)||"학생시스템";
+    const englishNames={"나의 공지":"My Notices","수강료 & 교재관리":"Tuition & Books","포트폴리오":"Portfolio","학습계획서":"Study Plan","포인트 랭킹":"Point Ranking","클래스정보":"Class Information","반자료실 & 공지":"Class Resources","교실포토":"Class Photos","포인트쇼핑몰":"Point Shop","나의동영상":"My Videos","개인정보 수정":"Profile Settings","학생 개인기록카드":"Student Record","SMS 내역":"SMS History","My 보카":"My Voca","내신 경향 분석 & 후기":"School Exam Insights"};
+    const chromeRoot=document.createElement("div"); chromeRoot.className="be-legacy-student-chrome be-student-root"; chromeRoot.hidden=true;
+    chromeRoot.innerHTML=`${studentSidebar(data,activeIndex,studentName)}${studentPageHeader("학생시스템",data,studentName)}`;
+    document.body.prepend(chromeRoot);
+    const rightContent=document.getElementById("rightContent");
+    if(rightContent&&!document.querySelector(".be-legacy-student-stage")){
+      const stage=document.createElement("section"); stage.className="be-legacy-student-stage";
+      stage.innerHTML=`<header class="be-page-title be-legacy-student-page-title"><h1>${escapeHtml(activeLabel)}</h1><span>${escapeHtml(englishNames[activeLabel]||"My Simson")}</span></header><div class="be-legacy-content-frame"></div>`;
+      rightContent.before(stage); stage.querySelector(".be-legacy-content-frame").appendChild(rightContent);
+    }
+    bindStudentShell(chromeRoot);
   }
 
   function bindHome(root) {
+    bindSiteHeader(root);
+    const reveal=()=>{ const observer=new IntersectionObserver((entries)=>entries.forEach((entry)=>{ if(entry.isIntersecting){ entry.target.classList.add("is-visible"); observer.unobserve(entry.target); } }),{threshold:.12}); root.querySelectorAll(".be-reveal").forEach((item)=>observer.observe(item)); }; reveal();
+    const hero=root.querySelector(".be-hero"); let ticking=false; window.addEventListener("scroll",()=>{ if(ticking)return; ticking=true; requestAnimationFrame(()=>{ hero?.style.setProperty("--be-hero-scroll",`${Math.min(window.scrollY*.16,70)}px`); ticking=false; }); },{passive:true});
     root.querySelectorAll(".be-tabs button").forEach((button) => button.addEventListener("click", () => {
       root.querySelectorAll(".be-tabs button").forEach((item) => item.classList.toggle("is-active", item === button));
       root.querySelectorAll(".be-feed-list").forEach((list) => { list.hidden = list.dataset.list !== button.dataset.feed; });
@@ -199,7 +278,7 @@
     root.querySelectorAll("#be-user-id, #be-user-pw").forEach((input) => input.addEventListener("keydown", (event) => { if (event.key === "Enter") submitLegacyLogin(); }));
     root.querySelector(".be-find-account")?.addEventListener("click", () => {
       const legacyLink = document.querySelector('a[href*="fancy_loginSearch"]');
-      if (legacyLink) legacyLink.click(); else location.assign("/member/login.aspx");
+      if (legacyLink) triggerLegacyNode(legacyLink); else location.assign("/member/member_login.aspx");
     });
     root.querySelector(".be-logout")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
   }
@@ -292,11 +371,11 @@
       info.hidden = !info.hidden;
       event.currentTarget.textContent = info.hidden ? "학생 정보 보기" : "학생 정보 닫기";
     });
-    root.querySelector(".be-reexam-more")?.addEventListener("click", () => document.querySelector('a[href*="Reexam_go"]')?.click());
-    root.querySelector('[data-calendar="prev"]')?.addEventListener("click", () => document.getElementById("ImageButton1")?.click());
-    root.querySelector('[data-calendar="next"]')?.addEventListener("click", () => document.getElementById("ImageButton2")?.click());
+    root.querySelector(".be-reexam-more")?.addEventListener("click", () => triggerLegacyNode(document.querySelector('a[href*="Reexam_go"]')));
+    root.querySelector('[data-calendar="prev"]')?.addEventListener("click", () => triggerLegacyNode(document.getElementById("ImageButton1")));
+    root.querySelector('[data-calendar="next"]')?.addEventListener("click", () => triggerLegacyNode(document.getElementById("ImageButton2")));
     root.querySelector(".be-calendar-today")?.addEventListener("click", () => location.reload());
-    root.querySelectorAll("[data-calendar-class]").forEach((button)=>button.addEventListener("click",()=>document.getElementById(button.dataset.calendarClass)?.click()));
+    root.querySelectorAll("[data-calendar-class]").forEach((button)=>button.addEventListener("click",()=>triggerLegacyNode(document.getElementById(button.dataset.calendarClass))));
   }
 
   function studentSidebar(data, activeIndex, studentName) {
@@ -308,7 +387,7 @@
   }
 
   function studentPageHeader(title, data, studentName) {
-    const privacyHref = data.menu[14]?.href || "/mypage/sub09_14.aspx";
+    const privacyHref = "/mypage/sub09_14.aspx";
     const reexam = data.stats?.find((item) => item.label.includes("재시횟수"))?.value || "0";
     return `<header class="be-student-header"><a class="be-student-header-logo" href="/mypage/sub09_02.aspx"><img src="${textLogo}" alt="학생시스템 대시보드"></a><button class="be-student-menu-toggle" type="button" aria-label="사이드바 열기">${icon("sidebar")}</button><nav class="be-header-metrics" aria-label="학생 현황"><a href="/mypage/sub09_01.aspx"><span>공지</span><b>${escapeHtml(data.noticeCount)}</b></a><a href="/mypage/sub09_06.aspx"><span>포인트</span><b>${escapeHtml(data.point)}</b></a><a href="/mypage/sub09_02.aspx"><span>재시</span><b>${escapeHtml(reexam)}</b></a></nav><div class="be-student-header-actions"><a class="be-student-exit" href="/index.aspx" aria-label="학생시스템 나가기"><span>학생시스템 나가기</span>${icon("arrow")}</a><button class="be-dark-toggle" type="button" aria-label="다크모드 전환" title="다크모드">◐</button><button class="be-header-user" type="button"><i>${escapeHtml(studentName.slice(0,1))}</i><strong>${escapeHtml(studentName)}</strong><span>${icon("chevron")}</span></button><div class="be-profile-menu" hidden><a href="${escapeHtml(privacyHref)}">개인정보 수정</a><button class="be-student-logout" type="button">로그아웃</button></div></div></header>`;
   }
@@ -334,9 +413,9 @@
       if(welcome){ welcome.querySelector(":scope > div:first-child")?.remove(); welcome.querySelector("#be-student-select")?.closest("label")?.remove(); if(!welcome.children.length)welcome.remove(); else welcome.classList.add("be-page-controls"); }
     }
     const setSidebar = (visible) => { root.classList.toggle("is-sidebar-hidden", !visible); root.querySelector(".be-student-sidebar")?.classList.toggle("is-open", visible); };
-    chrome.storage.local.get("studentSidebarVisible", ({ studentSidebarVisible }) => setSidebar(studentSidebarVisible !== false));
-    root.querySelector(".be-student-menu-toggle")?.addEventListener("click", () => { setSidebar(true); chrome.storage.local.set({ studentSidebarVisible:true }); });
-    root.querySelector(".be-sidebar-close")?.addEventListener("click", () => { setSidebar(false); chrome.storage.local.set({ studentSidebarVisible:false }); });
+    storageGet("studentSidebarVisible", ({ studentSidebarVisible }) => setSidebar(studentSidebarVisible !== false));
+    root.querySelector(".be-student-menu-toggle")?.addEventListener("click", () => { setSidebar(true); storageSet({ studentSidebarVisible:true }); });
+    root.querySelector(".be-sidebar-close")?.addEventListener("click", () => { setSidebar(false); storageSet({ studentSidebarVisible:false }); });
     root.querySelector(".be-student-logout")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
     const moreMenu = root.querySelector(".be-more-menu");
     root.querySelector(".be-more-menu-trigger")?.addEventListener("click", () => { if (moreMenu) moreMenu.hidden = false; });
@@ -344,8 +423,8 @@
     const profileMenu = root.querySelector(".be-profile-menu");
     root.querySelector(".be-header-user")?.addEventListener("click", () => { if (profileMenu) profileMenu.hidden = !profileMenu.hidden; });
     const setDark = (enabled) => { root.classList.toggle("is-dark", enabled); document.documentElement.classList.toggle("be-student-dark", enabled); };
-    chrome.storage.local.get("studentDarkMode", ({ studentDarkMode }) => setDark(studentDarkMode === true));
-    root.querySelector(".be-dark-toggle")?.addEventListener("click", () => { const enabled=!root.classList.contains("is-dark"); setDark(enabled); chrome.storage.local.set({ studentDarkMode:enabled }); });
+    storageGet("studentDarkMode", ({ studentDarkMode }) => setDark(studentDarkMode === true));
+    root.querySelector(".be-dark-toggle")?.addEventListener("click", () => { const enabled=!root.classList.contains("is-dark"); setDark(enabled); storageSet({ studentDarkMode:enabled }); });
     if (isStudentDashboard) detectMockExamForStudent(root);
   }
 
@@ -412,7 +491,7 @@
     document.body.appendChild(root); bindStudentShell(root);
     root.querySelector(".be-grade-search")?.addEventListener("click", () => {
       const year = document.getElementById("cmbyear"); if (year) year.value = root.querySelector("#be-grade-year")?.value;
-      document.getElementById("imgSearch")?.click();
+      triggerLegacyNode(document.getElementById("imgSearch"));
     });
     root.querySelectorAll(".be-grade-detail").forEach((button) => button.addEventListener("click", () => location.assign(button.dataset.href)));
   }
@@ -497,19 +576,21 @@
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root"; const answered=data.items.filter((item)=>item.answered).length;
     root.innerHTML=counselShell(data,data.studentName,`<section class="be-student-welcome"><div><span class="be-kicker">TEACHER COUNSEL</span><h1>선생님 상담</h1><p>수업과 학습에 관한 궁금한 점을 담당 선생님께 남겨보세요.</p></div><a class="be-counsel-write" href="/mypage/sub09_04_write.aspx">새 상담 작성 ${icon("arrow")}</a></section><section class="be-counsel-summary"><article><small>전체 상담</small><strong>${data.items.length}</strong><span>현재 페이지 기준</span></article><article><small>답변 완료</small><strong>${answered}</strong><span>선생님 답변이 도착했어요</span></article><article><small>답변 대기</small><strong>${data.items.length-answered}</strong><span>확인 중인 상담</span></article></section><section class="be-student-card be-counsel-list"><div class="be-card-head"><div><span>COUNSEL HISTORY</span><h2>상담 내역</h2></div><small>최근 상담부터 표시됩니다</small></div>${data.items.length?data.items.map((item)=>`<a href="${escapeHtml(item.href)}"><span class="be-counsel-type">${escapeHtml(item.type)}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.author)} · ${escapeHtml(item.date)}</small></div><em class="${item.answered?"is-complete":""}">${item.answered?"답변 완료":"답변 대기"}</em>${icon("arrow")}</a>`).join(""):`<div class="be-counsel-empty"><strong>아직 상담 내역이 없습니다.</strong><p>궁금한 내용을 선생님께 남겨보세요.</p></div>`}</section>`);
     document.body.appendChild(root); bindStudentShell(root);
+    root.querySelectorAll(".be-counsel-list>a").forEach((link, index)=>link.addEventListener("click",()=>{ const item=data.items[index]; if(item) sessionStorage.setItem(`beCounselTitle:${new URL(item.href).searchParams.get("idx")||"current"}`,item.title); }));
   }
 
   function readCounselDetail() {
     const base=readStudentDashboard(); const tables=Array.from(document.querySelectorAll("#rightContent .boardlisttable5 table"));
-    const readBlock=(table)=>{ const heads=Array.from(table?.querySelectorAll("tr:first-child th")||[]).map((cell)=>clean(cell.textContent)); const heading=heads.join(" "); const box=table?.querySelector(".c_box"); const attachments=Array.from(box?.querySelectorAll('a[href]')||[]).map((link)=>{ const href=absolute(link.getAttribute("href")); const fallback=decodeURIComponent(new URL(href).pathname.split("/").pop()||"첨부파일"); return {name:clean(link.textContent)||link.getAttribute("download")||fallback,href}; }).filter((item)=>item.href!=="#"); const clone=box?.cloneNode(true); clone?.querySelectorAll('a[href]').forEach((link)=>link.remove()); let content=clean(clone?.textContent).replace(/선생님준 화일\s*:\s*/g,"").replace(/학생전송 화일\s*:\s*/g,""); attachments.forEach((file)=>{ content=content.replace(file.name,"").trim(); }); return {heading,time:heads[1]?.match(/\d{4}-\d{2}-\d{2}.*$/)?.[0]||heading.match(/\d{4}-\d{2}-\d{2}(?:\s|\S)*?\d{1,2}:\d{2}(?::\d{1,2})?/)?.[0]||"",content,attachments}; };
+    const readBlock=(table)=>{ const heads=Array.from(table?.querySelectorAll("tr:first-child th")||[]).map((cell)=>clean(cell.textContent)); const heading=heads.join(" "); const box=table?.querySelector(".c_box"); const attachments=Array.from(box?.querySelectorAll('a[href]')||[]).map((link)=>{ const href=absolute(link.getAttribute("href")); const fallback=decodeURIComponent(new URL(href).pathname.split("/").pop()||"첨부파일"); return {name:clean(link.textContent)||link.getAttribute("download")||fallback,href}; }).filter((item)=>item.href!=="#"); const clone=box?.cloneNode(true); clone?.querySelectorAll('a[href]').forEach((link)=>link.remove()); clone?.querySelectorAll("br").forEach((br)=>br.replaceWith("\n")); let content=(clone?.textContent||"").replace(/\r/g,"").replace(/선생님준 화일\s*:\s*/g,"").replace(/학생전송 화일\s*:\s*/g,"").replace(/[ \t]+\n/g,"\n").replace(/\n[ \t]+/g,"\n").replace(/\n{3,}/g,"\n\n").trim(); attachments.forEach((file)=>{ content=content.replace(file.name,"").trim(); }); return {heading,time:heads[1]?.match(/\d{4}-\d{2}-\d{2}.*$/)?.[0]||heading.match(/\d{4}-\d{2}-\d{2}(?:\s|\S)*?\d{1,2}:\d{2}(?::\d{1,2})?/)?.[0]||"",content,attachments}; };
     const studentName=base.students.find((item)=>item.selected)?.label||clean(document.querySelector("#login_box b")?.textContent).replace(/학생$/,"")||"학생";
     const question=readBlock(tables[0]); const answer=readBlock(tables[1]); const teacherName=((answer.heading.match(/답변\s*:\s*([^\d]+?)\s*선생님의\s*답변/)||answer.heading.match(/([^\d:]+?)\s*선생님의\s*답변/)||[])[1]||"").replace(/^.*답변완료\s*/,"").trim()||"담당 선생님";
-    return {...base,studentName,teacherName,question,answer,attachments:[...question.attachments,...answer.attachments],answered:Boolean(tables[1])};
+    const idx=new URLSearchParams(location.search).get("idx")||"current"; const title=sessionStorage.getItem(`beCounselTitle:${idx}`)||"상담 상세";
+    return {...base,title,studentName,teacherName,question,answer,attachments:[...question.attachments,...answer.attachments],answered:Boolean(tables[1])};
   }
 
   function renderCounselDetail(data) {
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root";
-    root.innerHTML=counselShell(data,data.studentName,`<section class="be-counsel-detail-head"><a href="/mypage/sub09_04.aspx">${icon("arrow")} 상담 목록</a><span class="be-kicker">COUNSEL DETAIL</span><h1>선생님 상담</h1><span class="be-status-badge ${data.answered?"is-complete":""}">${data.answered?"답변 완료":"답변 대기"}</span></section><section class="be-student-card be-counsel-thread"><article class="is-student"><header><div class="be-counsel-person"><i>${escapeHtml(data.studentName.slice(0,1))}</i><strong>${escapeHtml(data.studentName)}</strong></div>${data.question.time?`<time>${escapeHtml(data.question.time)}</time>`:""}</header><p>${escapeHtml(data.question.content)}</p></article>${data.answered?`<article class="is-teacher"><header><div class="be-counsel-person"><i>${escapeHtml(data.teacherName.slice(0,1))}</i><strong>${escapeHtml(data.teacherName)} 선생님</strong></div>${data.answer.time?`<time>${escapeHtml(data.answer.time)}</time>`:""}</header><p>${escapeHtml(data.answer.content)}</p>${data.attachments.length?`<div class="be-counsel-files"><span>첨부파일</span>${data.attachments.map((file)=>`<a href="${escapeHtml(file.href)}" download>${icon("download")}<strong>${escapeHtml(file.name)}</strong><small>다운로드</small></a>`).join("")}</div>`:""}</article>`:`<div class="be-counsel-waiting"><strong>선생님의 답변을 기다리고 있어요.</strong><p>답변이 등록되면 이곳에서 확인할 수 있습니다.</p></div>`}</section><div class="be-counsel-detail-actions"><a href="/mypage/sub09_04_write.aspx${location.search}">추가 문의</a><a href="/mypage/sub09_04.aspx">목록으로</a></div>`);
+    root.innerHTML=counselShell(data,data.studentName,`<section class="be-counsel-detail-head"><span class="be-kicker">COUNSEL DETAIL</span><h1>${escapeHtml(data.title)}</h1><a href="/mypage/sub09_04.aspx">${icon("arrow")} 상담 목록</a><span class="be-status-badge ${data.answered?"is-complete":""}">${data.answered?"답변 완료":"답변 대기"}</span></section><section class="be-student-card be-counsel-thread"><article class="is-student"><header><div class="be-counsel-person"><i>${escapeHtml(data.studentName.slice(0,1))}</i><strong>${escapeHtml(data.studentName)}</strong></div>${data.question.time?`<time>${escapeHtml(data.question.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.question.content)}</p></article>${data.answered?`<article class="is-teacher"><header><div class="be-counsel-person"><i>${escapeHtml(data.teacherName.slice(0,1))}</i><strong>${escapeHtml(data.teacherName)} 선생님</strong></div>${data.answer.time?`<time>${escapeHtml(data.answer.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.answer.content)}</p>${data.attachments.length?`<div class="be-counsel-files"><span>첨부파일</span>${data.attachments.map((file)=>`<a href="${escapeHtml(file.href)}" download>${icon("download")}<strong>${escapeHtml(file.name)}</strong><small>다운로드</small></a>`).join("")}</div>`:""}</article>`:`<div class="be-counsel-waiting"><strong>선생님의 답변을 기다리고 있어요.</strong><p>답변이 등록되면 이곳에서 확인할 수 있습니다.</p></div>`}</section>`);
     document.body.appendChild(root); bindStudentShell(root);
   }
 
@@ -524,7 +605,7 @@
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root";
     root.innerHTML=counselShell(data,data.studentName,`<section class="be-student-welcome"><div><span class="be-kicker">NEW COUNSEL</span><h1>새 상담 작성</h1><p>상담할 선생님과 유형을 선택하고 내용을 작성해 주세요.</p></div><a class="be-counsel-list-link" href="/mypage/sub09_04.aspx">상담 목록</a></section><section class="be-student-card be-counsel-form"><label><span>제목</span><input id="be-counsel-title" type="text" maxlength="100" placeholder="상담 제목을 입력하세요"></label><fieldset><legend>상담할 선생님</legend><div class="be-teacher-grid">${data.teachers.map((teacher,index)=>`<label><input type="radio" name="be-teacher" value="${escapeHtml(teacher.value)}" ${index===0?"checked":""}><span><img src="${escapeHtml(teacher.image)}" alt=""><strong>${escapeHtml(teacher.name)}</strong><small>${escapeHtml(teacher.subject||"담당 선생님")}</small></span></label>`).join("")}</div></fieldset><label><span>상담 유형</span><select id="be-counsel-kind"><option value="">상담 유형을 선택하세요</option>${data.kinds.map((kind)=>`<option value="${escapeHtml(kind.value)}">${escapeHtml(kind.label)}</option>`).join("")}</select></label><label><span>내용</span><textarea id="be-counsel-content" rows="9" placeholder="상담 내용을 구체적으로 작성해 주세요"></textarea><small>한글, 영문 및 일반적인 문장부호를 사용할 수 있습니다.</small></label><div class="be-counsel-form-actions"><a href="/mypage/sub09_04.aspx">취소</a><button type="button" class="be-counsel-submit">상담 등록</button></div></section>`);
     document.body.appendChild(root); bindStudentShell(root);
-    root.querySelector(".be-counsel-submit")?.addEventListener("click",()=>{ const title=root.querySelector("#be-counsel-title")?.value.trim(); const content=root.querySelector("#be-counsel-content")?.value.trim(); const kind=root.querySelector("#be-counsel-kind")?.value; const teacher=root.querySelector('input[name="be-teacher"]:checked')?.value; if(!title||title.length<3){alert("제목을 3자 이상 입력해 주세요.");return;} if(!teacher){alert("상담할 선생님을 선택해 주세요.");return;} if(!kind){alert("상담 유형을 선택해 주세요.");return;} if(!content){alert("상담 내용을 입력해 주세요.");return;} document.getElementById("txttitle").value=title; document.getElementById("txtcontent").value=content; document.getElementById("cmbkind").value=kind; const legacyTeacher=document.querySelector(`#rptContentList input[name="optteacher"][value="${CSS.escape(teacher)}"]`); if(legacyTeacher)legacyTeacher.checked=true; document.getElementById("Hteacheridx").value=teacher; document.getElementById("imgSave")?.click(); });
+    root.querySelector(".be-counsel-submit")?.addEventListener("click",()=>{ const title=root.querySelector("#be-counsel-title")?.value.trim(); const content=root.querySelector("#be-counsel-content")?.value.trim(); const kind=root.querySelector("#be-counsel-kind")?.value; const teacher=root.querySelector('input[name="be-teacher"]:checked')?.value; if(!title||title.length<3){alert("제목을 3자 이상 입력해 주세요.");return;} if(!teacher){alert("상담할 선생님을 선택해 주세요.");return;} if(!kind){alert("상담 유형을 선택해 주세요.");return;} if(!content){alert("상담 내용을 입력해 주세요.");return;} document.getElementById("txttitle").value=title; document.getElementById("txtcontent").value=content; document.getElementById("cmbkind").value=kind; const legacyTeacher=document.querySelector(`#rptContentList input[name="optteacher"][value="${CSS.escape(teacher)}"]`); if(legacyTeacher)legacyTeacher.checked=true; document.getElementById("Hteacheridx").value=teacher; triggerLegacyNode(document.getElementById("imgSave")); });
   }
 
   function readHomeworkPopup() {
@@ -568,9 +649,11 @@
       if(legacySave)legacySave.setAttribute("data-better-esimson-action",saveBridgeId);
       const confirmCandidates=Array.from(cells[3]?.querySelectorAll('a,button,input[type="button"],input[type="submit"],input[type="image"],img[onclick]')||[]);
       const legacyConfirm=confirmCandidates.find((node)=>/과제\s*확인|homework|btn[_-]?(?:hw|homework|check)/i.test([clean(node.textContent),node.getAttribute("value"),node.getAttribute("alt"),node.getAttribute("title"),node.getAttribute("src"),node.querySelector("img")?.getAttribute("alt"),node.querySelector("img")?.getAttribute("src")].filter(Boolean).join(" ")))||confirmCandidates[0];
+      const confirmBridgeId=legacyConfirm?`homework-confirm-${index}`:"";
+      if(legacyConfirm)legacyConfirm.setAttribute("data-better-esimson-action",confirmBridgeId);
       const meaningfulContent=clean(content?.textContent).replace(/\bNone\b/gi,"").replace(/[-\s]/g,"");
       const hasHomeworkData=meaningfulContent.length>=5||Boolean(deadline)||assessments.length>0||links.length>0||actions.length>0;
-      return {index,className:clean(cells[0]?.textContent),teacher:clean(cells[1]?.textContent),progress:clean(cells[2]?.textContent),deadline,assessments,contentHtml:content?.innerHTML||"",files:links,actions,legacyConfirm,needsConfirm:Boolean(legacyConfirm)&&(confirmPrompt||!hasHomeworkData),legacySelect:cells[6]?.querySelector("select"),legacySave,saveBridgeId};
+      return {index,className:clean(cells[0]?.textContent),teacher:clean(cells[1]?.textContent),progress:clean(cells[2]?.textContent),deadline,assessments,contentHtml:content?.innerHTML||"",files:links,actions,legacyConfirm,confirmBridgeId,needsConfirm:Boolean(legacyConfirm)&&(confirmPrompt||!hasHomeworkData),legacySelect:cells[6]?.querySelector("select"),legacySave,saveBridgeId};
     });
     return { title:"숙제 확인", rows };
   }
@@ -594,9 +677,9 @@
     root.innerHTML=`<header><div><span>ATTENDANCE & HOMEWORK</span><h1>${escapeHtml(data.title)}</h1></div></header><main>${data.rows.length?data.rows.map((item)=>`<article class="be-homework-item" data-homework-index="${item.index}"><div class="be-homework-meta"><span>${escapeHtml(item.className)}</span><strong>${escapeHtml(item.teacher)}</strong><small>${escapeHtml(item.progress)}</small>${item.assessments.length?`<div class="be-homework-scores">${item.assessments.map((test)=>`<article><span>TEST RESULT</span><strong>${escapeHtml(test.name)}</strong><dl><div><dt>내 점수</dt><dd>${escapeHtml(test.score)}<small> / ${escapeHtml(test.max)}</small></dd></div><div><dt>반 평균</dt><dd>${escapeHtml(test.average)}</dd></div></dl></article>`).join("")}</div>`:""}${item.actions.length?`<div class="be-homework-tools">${item.actions.map((action,actionIndex)=>{ const tone=action.label.includes("뉴스")?"news":action.label.includes("리스닝")?"listening":action.label.includes("보카")?"voca":"essay"; return `<div class="be-homework-tool"><button class="is-${tone}" type="button" data-homework-action="${actionIndex}"><span>${escapeHtml(action.label)}</span></button>${action.status?`<span class="be-homework-action-status is-${action.status.tone}">${escapeHtml(action.status.label)}</span>`:""}</div>`; }).join("")}</div>`:""}</div><div class="be-homework-body"><div class="be-homework-gated ${item.needsConfirm?"is-locked":""}"><div class="be-homework-private">${item.deadline?`<div class="be-homework-deadline"><span>마감일</span><strong>${escapeHtml(item.deadline.date)} (${escapeHtml(item.deadline.weekday)})</strong><em class="is-${item.deadline.tone}">${escapeHtml(item.deadline.status)}</em></div>`:""}<div class="be-homework-content">${item.contentHtml}</div>${item.files.length?`<div class="be-homework-resources"><div class="be-homework-files">${item.files.map((file)=>`<a href="${escapeHtml(file.href)}" download>${icon("download")}<span>${escapeHtml(file.name)}</span></a>`).join("")}</div></div>`:""}</div>${item.needsConfirm?`<button class="be-homework-confirm" type="button"><span>숙제 데이터를 불러오려면 확인이 필요해요.</span><strong>숙제 확인</strong></button>`:""}</div></div><div class="be-homework-check"><label>Self Check<select>${item.legacySelect?Array.from(item.legacySelect.options).map((option)=>`<option value="${escapeHtml(option.value)}" ${option.selected?"selected":""}>${escapeHtml(option.textContent)}</option>`).join(""):`<option>선택 항목 없음</option>`}</select></label><button class="be-homework-save" type="button" ${item.legacySave?"":"disabled"}>저장</button></div></article>`).join(""):`<div class="be-homework-popup-empty"><strong>표시할 숙제가 없습니다.</strong><p>숙제 정보가 등록되면 이곳에서 확인할 수 있습니다.</p></div>`}</main>`;
     document.body.appendChild(root);
     if(autoSelectedCount)showToast(autoSelectedCount===1?"Self Check를 매우만족으로 선택했어요.":`Self Check ${autoSelectedCount}건을 매우만족으로 선택했어요.`);
-    chrome.storage.local.get("studentDarkMode",({studentDarkMode})=>{ const enabled=studentDarkMode===true; root.classList.toggle("is-dark",enabled); document.documentElement.classList.toggle("be-homework-dark",enabled); });
-    const runLegacyAction=(bridgeId,fallback)=>{ if(bridgeId){ document.documentElement.setAttribute("data-better-esimson-click-target",bridgeId); document.dispatchEvent(new Event("better-esimson-page-click")); }else fallback?.click(); };
-    data.rows.forEach((item)=>{ const card=root.querySelector(`[data-homework-index="${item.index}"]`); card?.querySelector(".be-homework-confirm")?.addEventListener("click",(event)=>{ const button=event.currentTarget; button.disabled=true; button.classList.add("is-loading"); button.querySelector("span").textContent="숙제 데이터를 불러오고 있어요."; button.querySelector("strong").textContent="불러오는 중…"; setTimeout(()=>item.legacyConfirm?.click(),80); }); card?.querySelector("select")?.addEventListener("change",(event)=>{ if(!item.legacySelect)return; item.legacySelect.value=event.target.value; item.legacySelect.dispatchEvent(new Event("change",{bubbles:true})); }); card?.querySelector(".be-homework-save")?.addEventListener("click",()=>runLegacyAction(item.saveBridgeId,item.legacySave)); card?.querySelectorAll("[data-homework-action]").forEach((button)=>button.addEventListener("click",()=>{ const action=item.actions[Number(button.dataset.homeworkAction)]; if(!action?.node)return; runLegacyAction(action.bridgeId,action.node); })); });
+    storageGet("studentDarkMode",({studentDarkMode})=>{ const enabled=studentDarkMode===true; root.classList.toggle("is-dark",enabled); document.documentElement.classList.toggle("be-homework-dark",enabled); });
+    const runLegacyAction=(bridgeId,fallback)=>triggerLegacyNode(fallback,bridgeId);
+    data.rows.forEach((item)=>{ const card=root.querySelector(`[data-homework-index="${item.index}"]`); card?.querySelector(".be-homework-confirm")?.addEventListener("click",(event)=>{ const button=event.currentTarget; button.disabled=true; button.classList.add("is-loading"); button.querySelector("span").textContent="숙제 데이터를 불러오고 있어요."; button.querySelector("strong").textContent="불러오는 중…"; setTimeout(()=>runLegacyAction(item.confirmBridgeId,item.legacyConfirm),80); }); card?.querySelector("select")?.addEventListener("change",(event)=>{ if(!item.legacySelect)return; item.legacySelect.value=event.target.value; item.legacySelect.dispatchEvent(new Event("change",{bubbles:true})); }); card?.querySelector(".be-homework-save")?.addEventListener("click",()=>runLegacyAction(item.saveBridgeId,item.legacySave)); card?.querySelectorAll("[data-homework-action]").forEach((button)=>button.addEventListener("click",()=>{ const action=item.actions[Number(button.dataset.homeworkAction)]; if(!action?.node)return; runLegacyAction(action.bridgeId,action.node); })); });
     const autoSaveItem=data.rows.find((item)=>item.autoSelfCheckSelected&&item.legacySave);
     if(autoSaveItem){
       setTimeout(()=>{ showToast("Self Check를 매우만족으로 저장해요."); runLegacyAction(autoSaveItem.saveBridgeId,autoSaveItem.legacySave); },650);
@@ -609,10 +692,19 @@
     const legacyId = document.getElementById("txtmainid");
     const legacyPw = document.getElementById("txtmainpwd");
     if (!modernId?.value.trim() || !modernPw?.value) { alert("아이디와 비밀번호를 입력해 주세요."); return; }
-    if (!legacyId || !legacyPw) { location.assign("/member/login.aspx"); return; }
+    if (!legacyId || !legacyPw) { location.assign("/member/member_login.aspx"); return; }
     legacyId.value = modernId.value.trim();
     legacyPw.value = modernPw.value;
-    document.getElementById("imgMainLogin")?.click();
+    triggerLegacyNode(document.getElementById("imgMainLogin"));
+  }
+
+  function renderLogin() {
+    const data=readPage(); const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-login-page";
+    root.innerHTML=`<header class="be-header"><a class="be-brand" href="/index.aspx"><img src="${textLogo}" alt="SIMSON Language Institute"></a><nav class="be-nav">${data.nav.filter((item)=>item.label!=="마이페이지").map((item)=>`<div class="be-nav-group"><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></div>`).join("")}</nav><div class="be-header-actions be-auth-guest"><a class="be-header-join" href="/member/step01.aspx">회원가입</a></div><button class="be-mobile-menu" type="button">${icon("grid")}</button></header><main class="be-login-main"><section class="be-login-story"><span class="be-kicker">MY SIMSON</span><h1>수험영어를 넘어<br>세상을 보는 창</h1><p>수업과 과제, 성적과 포인트까지<br>심슨에서의 모든 학습 기록을 만나보세요.</p><div><strong>Work Hard.</strong><span>No Short Cut.</span></div></section><section class="be-login-card"><span class="be-kicker">WELCOME BACK</span><h2>로그인</h2><p>계정 정보를 입력해 주세요.</p><form id="be-member-login"><label><span>아이디</span><input id="be-login-id" autocomplete="username" autofocus placeholder="아이디를 입력하세요"></label><label><span>비밀번호</span><input id="be-login-password" type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요"></label><button type="submit">로그인</button></form><div class="be-login-support"><a href="/member/step01.aspx">회원가입</a><button type="button" data-find-account>아이디 · 비밀번호 찾기</button></div></section></main>${footerMarkup("be-login-footer")}`;
+    document.body.appendChild(root);
+    root.querySelector(".be-mobile-menu")?.addEventListener("click",()=>root.querySelector(".be-nav")?.classList.toggle("is-open"));
+    root.querySelector("#be-member-login")?.addEventListener("submit",(event)=>{ event.preventDefault(); const id=root.querySelector("#be-login-id").value.trim(); const password=root.querySelector("#be-login-password").value; if(!id||!password){ showToast("아이디와 비밀번호를 입력해 주세요.","neutral"); return; } const legacyId=document.getElementById("txtmember_id"), legacyPassword=document.getElementById("txtmember_pwd"), legacyRemember=document.getElementById("chklogin"); if(!legacyId||!legacyPassword){ showToast("로그인 양식을 찾지 못했어요.","neutral"); return; } legacyId.value=id; legacyPassword.value=password; if(legacyRemember)legacyRemember.checked=true; [legacyId,legacyPassword,legacyRemember].filter(Boolean).forEach((field)=>field.dispatchEvent(new Event("change",{bubbles:true}))); triggerLegacyNode(document.getElementById("imgLoginGo")); });
+    root.querySelector("[data-find-account]")?.addEventListener("click",()=>{ const legacy=document.querySelector('a[href*="fancy_loginSearch"]'); if(legacy)triggerLegacyNode(legacy); else showToast("기존 사이트에서 계정 찾기를 이용해 주세요.","neutral"); });
   }
 
   function createToolbar() {
@@ -620,7 +712,7 @@
     bar.id = "better-esimson-toolbar";
     const vocaOptions = isVocaHelperPage ? `<section class="be-voca-options"><div><span>VOCA HELPER</span><strong>온라인 보카 도우미</strong></div><label class="be-tool-toggle be-voca-option" data-voca-option="helper"><span><strong>Helper</strong><small>정답을 알아보기 쉽게 표시</small></span><input type="checkbox"><i aria-hidden="true"></i></label><label class="be-tool-toggle be-voca-option" data-voca-option="auto"><span><strong>Auto</strong><small>QA 자동 선택 실행</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label><div class="be-voca-auto-options" hidden><label class="be-tool-toggle be-voca-option is-sub" data-voca-option="delay"><span><strong>랜덤 딜레이</strong><small>문제마다 2.0–8.0초 대기</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label><label class="be-tool-toggle be-voca-option is-sub" data-voca-option="wrong"><span><strong>오답 테스트</strong><small>정답 전 오답 1–3회 선택</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label></div></section>` : "";
     const selfCheckOption=isStudentPage?`<label class="be-tool-toggle be-self-check-toggle"><span><strong>자동 Self Check</strong><small>No Check를 매우만족으로 저장</small></span><input type="checkbox" checked><i aria-hidden="true"></i></label>`:"";
-    bar.innerHTML = `<button class="be-tool-trigger" type="button" aria-label="Better Esimson 메뉴"><img src="${extensionIcon}" alt=""></button><div class="be-tool-panel" hidden><div><img class="be-tool-logo" src="${extensionIcon}" alt=""><p><strong>Better Esimson</strong><small>${supportsModernUi ? "디자인 설정" : isVocaHelperPage ? "보카 도우미 설정" : "이 페이지는 준비 중"}</small></p><button class="be-tool-close" type="button" aria-label="닫기">${icon("close")}</button></div>${supportsModernUi ? `<label class="be-tool-toggle be-design-toggle"><span><strong>새 디자인</strong><small>${supportsModernHeader?"Better Esimson 헤더 사용":"Better Esimson 화면 사용"}</small></span><input type="checkbox" ${state.modern ? "checked" : ""}><i aria-hidden="true"></i></label>${selfCheckOption}` : `<p class="be-tool-note">${isVocaHelperPage ? "보카 화면은 원본 디자인으로 표시됩니다." : "이 페이지는 아직 원본 그대로 표시됩니다."}</p>`}${vocaOptions}</div>`;
+    bar.innerHTML = `<button class="be-tool-trigger" type="button" aria-label="Better Esimson 메뉴"><img src="${extensionIcon}" alt=""></button><div class="be-tool-panel" hidden><div class="be-tool-head"><img class="be-tool-logo" src="${extensionIcon}" alt=""><p><strong>Better Esimson</strong><small>${supportsModernUi ? "설정" : isVocaHelperPage ? "보카 도우미 설정" : "이 페이지는 준비 중"}</small></p><button class="be-tool-close" type="button" aria-label="닫기">${icon("close")}</button></div>${supportsModernUi ? `<label class="be-tool-toggle be-design-toggle"><span><strong>새 디자인</strong><small>${supportsModernHeader?"Better Esimson 헤더 사용":"Better Esimson 화면 사용"}</small></span><input type="checkbox" ${state.modern ? "checked" : ""}><i aria-hidden="true"></i></label>${selfCheckOption}` : `<p class="be-tool-note">${isVocaHelperPage ? "보카 화면은 원본 디자인으로 표시됩니다." : "이 페이지는 아직 원본 그대로 표시됩니다."}</p>`}${vocaOptions}<a class="be-tool-credit" href="https://github.com/z1hxn/Better-Esimson" target="_blank" rel="noopener noreferrer" aria-label="Better Esimson GitHub 저장소"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.7a9.5 9.5 0 0 0-3 18.52c.48.09.65-.2.65-.46v-1.85c-2.66.58-3.22-1.13-3.22-1.13-.43-1.1-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.85 1.46 2.24 1.04 2.79.8.09-.62.33-1.04.61-1.28-2.12-.24-4.35-1.06-4.35-4.7 0-1.04.37-1.89.98-2.56-.1-.24-.43-1.21.09-2.52 0 0 .8-.26 2.61.98A9 9 0 0 1 12 7.19a9 9 0 0 1 2.38.32c1.81-1.23 2.61-.98 2.61-.98.52 1.31.19 2.28.09 2.52.61.67.98 1.52.98 2.56 0 3.65-2.23 4.45-4.36 4.69.34.3.65.88.65 1.78v2.68c0 .26.17.56.66.46A9.5 9.5 0 0 0 12 2.7Z"/></svg><span>Made by <strong>@z1hxn</strong></span></a></div>`;
     document.body.appendChild(bar);
     const panel = bar.querySelector(".be-tool-panel");
     panel.addEventListener("pointerdown",(event)=>event.stopPropagation());
@@ -632,14 +724,13 @@
     document.addEventListener("keydown",(event)=>{ if(event.key==="Escape"&&!panel.hidden)setPanel(false); });
     bar.querySelector(".be-design-toggle input")?.addEventListener("change", (event) => {
       setModern(event.target.checked);
-      chrome.storage.local.set({ designEnabled: event.target.checked });
+      storageSet({ designEnabled: event.target.checked });
       showToast(event.target.checked?"커스텀 UI를 켰어요.":"커스텀 UI를 껐어요.",event.target.checked?"success":"neutral");
     });
     const selfCheckToggle=bar.querySelector(".be-self-check-toggle input");
     if(selfCheckToggle){
-      bar.querySelector(".be-self-check-toggle")?.addEventListener("click",(event)=>{ if(!event.target.closest("i"))event.preventDefault(); });
-      chrome.storage.local.get("autoSelfCheck",({autoSelfCheck})=>{ selfCheckToggle.checked=autoSelfCheck!==false; });
-      selfCheckToggle.addEventListener("change",(event)=>{ chrome.storage.local.set({autoSelfCheck:event.target.checked}); showToast(event.target.checked?"자동 Self Check를 켰어요.":"자동 Self Check를 껐어요.",event.target.checked?"success":"neutral"); });
+      storageGet("autoSelfCheck",({autoSelfCheck})=>{ selfCheckToggle.checked=autoSelfCheck!==false; });
+      selfCheckToggle.addEventListener("change",(event)=>{ storageSet({autoSelfCheck:event.target.checked}); showToast(event.target.checked?"자동 Self Check를 켰어요.":"자동 Self Check를 껐어요.",event.target.checked?"success":"neutral"); });
     }
     if (isVocaHelperPage) {
       const command = (action, enabled) => document.dispatchEvent(new CustomEvent("better-esimson-voca-command", { detail: { action, enabled } }));
@@ -667,7 +758,7 @@
       bar.style.bottom = corner.includes("bottom") ? `${margin}px` : "auto";
       bar.dataset.corner = corner;
     };
-    chrome.storage.local.get("toolbarCorner", ({ toolbarCorner }) => applyCorner(toolbarCorner || "bottom-right"));
+    storageGet("toolbarCorner", ({ toolbarCorner }) => applyCorner(toolbarCorner || "bottom-right"));
     let start = null;
     handle.addEventListener("pointerdown", (event) => {
       start = { x: event.clientX, y: event.clientY, left: bar.getBoundingClientRect().left, top: bar.getBoundingClientRect().top, moved: false, wasOpen:document.querySelector("#better-esimson-toolbar .be-tool-panel")?.hidden===false };
@@ -695,7 +786,7 @@
         const rect = bar.getBoundingClientRect();
         const corner = `${rect.top + rect.height / 2 < innerHeight / 2 ? "top" : "bottom"}-${rect.left + rect.width / 2 < innerWidth / 2 ? "left" : "right"}`;
         applyCorner(corner);
-        chrome.storage.local.set({ toolbarCorner: corner });
+        storageSet({ toolbarCorner: corner });
       }
       bar.classList.remove("is-dragging");
       start = null;
@@ -705,6 +796,12 @@
 
   function setModern(enabled) {
     state.modern = enabled;
+    if(isLegacyStudentPage){
+      document.documentElement.classList.toggle("better-esimson-legacy-student-active",enabled);
+      document.querySelector(".be-legacy-student-chrome")?.toggleAttribute("hidden",!enabled);
+      const toggle=document.querySelector(".be-design-toggle input"); if(toggle)toggle.checked=enabled;
+      return;
+    }
     if(supportsModernHeader){
       document.documentElement.classList.toggle("better-esimson-header-active",enabled);
       document.querySelector(".be-legacy-modern-header")?.toggleAttribute("hidden",!enabled);
@@ -721,10 +818,11 @@
   }
 
   if (isHomeworkPopup) {
-    chrome.storage.local.get(["designEnabled","autoSelfCheck"],({designEnabled,autoSelfCheck})=>{ renderHomeworkPopup(readHomeworkPopup(),autoSelfCheck!==false); setModern(designEnabled!==false); });
+    storageGet(["designEnabled","autoSelfCheck"],({designEnabled,autoSelfCheck})=>{ renderHomeworkPopup(readHomeworkPopup(),autoSelfCheck!==false); setModern(designEnabled!==false); });
     return;
   }
   if (isHome) renderHome(readPage());
+  if (isLoginPage) renderLogin();
   if (isStudentDashboard) renderStudentDashboard(readStudentDashboard());
   if (isGradesPage) renderGrades(readGrades());
   if (isGradeDetailPage) renderGradeDetail(readGradeDetail());
@@ -732,9 +830,10 @@
   if (isCounselListPage) renderCounselList(readCounselList());
   if (isCounselDetailPage) renderCounselDetail(readCounselDetail());
   if (isCounselWritePage) renderCounselWrite(readCounselWrite());
+  if (isLegacyStudentPage) renderLegacyStudentChrome();
   if (supportsModernHeader) renderLegacyModernHeader(readPage());
   createToolbar();
-  if (supportsModernUi) chrome.storage.local.get("designEnabled", ({ designEnabled }) => setModern(designEnabled !== false));
+  if (supportsModernUi) storageGet("designEnabled", ({ designEnabled }) => setModern(designEnabled !== false));
 })();
 
 // Integrated Esimson Voca Helper. Keep this isolated from non-vocabulary pages.
