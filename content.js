@@ -104,6 +104,55 @@
     return { loggedIn, name: koreanName || fallback || "학생" };
   }
 
+  function requestLogout() {
+    storageGet("confirmLogout", ({ confirmLogout }) => {
+      if (confirmLogout === true && !confirm("로그아웃 하시겠습니까?")) return;
+      location.assign("/logout.aspx");
+    });
+  }
+
+  function bindNavigationShortcuts() {
+    const studentRoutes={
+      "1":"/mypage/sub09_02.aspx",
+      "2":"/mypage/sub09_12.aspx",
+      "3":"/mypage/sub09_06.aspx",
+      "4":"/mypage/sub09_04.aspx",
+      "5":"/mypage/sub09_13.aspx",
+      "6":"/mypage/sub09_21.aspx"
+    };
+    document.addEventListener("keydown",(event)=>{
+      if(event.defaultPrevented||event.repeat||event.isComposing||event.ctrlKey||event.metaKey||event.altKey)return;
+      if(document.querySelector(".be-onboarding"))return;
+      const key=typeof event.key === "string" ? event.key.toLowerCase() : "";
+      if(!key) return;
+      if(isLoginPage&&key==="l"){
+        event.preventDefault();
+        event.stopPropagation();
+        const modernForm=document.getElementById("be-member-login");
+        if(modernForm){ modernForm.requestSubmit(); return; }
+        triggerLegacyNode(document.getElementById("imgLoginGo"));
+        return;
+      }
+      const target=event.target;
+      if(target?.closest?.('input,textarea,select,[contenteditable=""],[contenteditable="true"],[role="textbox"]'))return;
+      let destination="";
+      if(key==="l"&&readAuthState().loggedIn){
+        event.preventDefault();
+        event.stopPropagation();
+        requestLogout();
+        return;
+      }
+      if(key==="l")destination="/member/member_login.aspx";
+      else if(isHome&&key==="s")destination="/mypage/sub09_02.aspx";
+      else if(isStudentPage&&key==="m")destination="/index.aspx";
+      else if(isStudentPage)destination=studentRoutes[event.key]||"";
+      if(!destination)return;
+      event.preventDefault();
+      event.stopPropagation();
+      location.assign(destination);
+    },true);
+  }
+
   function headerAuthMarkup(auth) {
     if (!auth.loggedIn) return `<div class="be-header-actions be-auth-guest"><a class="be-header-join" href="/member/step01.aspx">회원가입</a><a class="be-primary-small" href="/member/member_login.aspx">로그인</a></div>`;
     return `<div class="be-header-actions be-auth-user"><a class="be-student-system-link" href="/mypage/sub09_02.aspx"><span>학생시스템</span>${icon("arrow")}</a><button class="be-site-theme" type="button" aria-label="화면 모드">◐</button><button class="be-site-user" type="button" aria-expanded="false"><i>${escapeHtml(auth.name.slice(0,1))}</i><strong>${escapeHtml(auth.name)}</strong>${icon("chevron")}</button><div class="be-site-profile-menu" hidden><a href="/mypage/sub09_14.aspx">개인정보 수정</a><button type="button" data-site-logout>로그아웃</button></div></div>`;
@@ -115,7 +164,7 @@
     user?.addEventListener("click", (event) => { event.stopPropagation(); const open = menu.hidden; menu.hidden = !open; user.setAttribute("aria-expanded", String(open)); });
     menu?.addEventListener("click", (event) => event.stopPropagation());
     document.addEventListener("click", () => { if (menu && !menu.hidden) { menu.hidden = true; user?.setAttribute("aria-expanded", "false"); } });
-    scope.querySelector("[data-site-logout]")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
+    scope.querySelector("[data-site-logout]")?.addEventListener("click", requestLogout);
   }
 
   function readMockExam(doc = document, view = window) {
@@ -284,7 +333,7 @@
       const legacyLink = document.querySelector('a[href*="fancy_loginSearch"]');
       if (legacyLink) triggerLegacyNode(legacyLink); else location.assign("/member/member_login.aspx");
     });
-    root.querySelector(".be-logout")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
+    root.querySelector(".be-logout")?.addEventListener("click", requestLogout);
   }
 
   const STUDENT_MENU_LABELS = [
@@ -393,10 +442,11 @@
 
   function studentSidebar(data, activeIndex, studentName) {
     const primaryIndexes = [1,2,6,12,4,17];
+    const shortcutKeys = new Map(primaryIndexes.map((index, position) => [index, String(position + 1)]));
     const hiddenIndexes = new Set([...primaryIndexes,7,14]);
     const primary = primaryIndexes.map((index) => ({ ...data.menu[index], index }));
     const more = data.menu.map((item,index) => ({ ...item,index })).filter((item) => !hiddenIndexes.has(item.index));
-    return `<aside class="be-student-sidebar"><nav aria-label="학생시스템 메뉴">${primary.map((item) => `<a href="${escapeHtml(item.href)}" class="${item.index === activeIndex ? "is-active" : ""}"><span>${escapeHtml(item.label)}</span>${icon("arrow")}</a>`).join("")}<button class="be-more-menu-trigger" type="button">${icon("grid")}<span>전체 메뉴</span>${icon("arrow")}</button></nav><button class="be-sidebar-close" type="button">${icon("sidebar")}<span>사이드바 접기</span></button><div class="be-more-menu" hidden><div><strong>전체 메뉴</strong><button class="be-more-menu-close" type="button" aria-label="닫기">${icon("close")}</button></div>${more.map((item) => `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}${icon("arrow")}</a>`).join("")}</div></aside>`;
+    return `<aside class="be-student-sidebar"><nav aria-label="학생시스템 메뉴">${primary.map((item) => `<a href="${escapeHtml(item.href)}" class="${item.index === activeIndex ? "is-active" : ""}"><span>${escapeHtml(item.label)}</span><kbd aria-label="단축키 ${shortcutKeys.get(item.index)}">${shortcutKeys.get(item.index)}</kbd>${icon("arrow")}</a>`).join("")}<button class="be-more-menu-trigger" type="button">${icon("grid")}<span>전체 메뉴</span>${icon("arrow")}</button></nav><button class="be-sidebar-close" type="button">${icon("sidebar")}<span>사이드바 접기</span></button><div class="be-more-menu" hidden><div><strong>전체 메뉴</strong><button class="be-more-menu-close" type="button" aria-label="닫기">${icon("close")}</button></div>${more.map((item) => `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}${icon("arrow")}</a>`).join("")}</div></aside>`;
   }
 
   function studentPageHeader(title, data, studentName) {
@@ -429,7 +479,7 @@
     storageGet("studentSidebarVisible", ({ studentSidebarVisible }) => setSidebar(studentSidebarVisible !== false));
     root.querySelector(".be-student-menu-toggle")?.addEventListener("click", () => { setSidebar(true); storageSet({ studentSidebarVisible:true }); });
     root.querySelector(".be-sidebar-close")?.addEventListener("click", () => { setSidebar(false); storageSet({ studentSidebarVisible:false }); });
-    root.querySelector(".be-student-logout")?.addEventListener("click", () => { if (confirm("로그아웃 하시겠습니까?")) location.assign("/logout.aspx"); });
+    root.querySelector(".be-student-logout")?.addEventListener("click", requestLogout);
     const moreMenu = root.querySelector(".be-more-menu");
     root.querySelector(".be-more-menu-trigger")?.addEventListener("click", () => { if (moreMenu) moreMenu.hidden = false; });
     root.querySelector(".be-more-menu-close")?.addEventListener("click", () => { if (moreMenu) moreMenu.hidden = true; });
@@ -980,9 +1030,11 @@
   function createToolbar() {
     const bar = document.createElement("div");
     bar.id = "better-esimson-toolbar";
+    bar.hidden = true;
     const vocaOptions = isVocaHelperPage ? `<section class="be-voca-options"><div><span>VOCA HELPER</span><strong>온라인 보카 도우미</strong></div><label class="be-tool-toggle be-voca-option" data-voca-option="helper"><span><strong>Helper</strong><small>정답을 알아보기 쉽게 표시</small></span><input type="checkbox"><i aria-hidden="true"></i></label><label class="be-tool-toggle be-voca-option" data-voca-option="auto"><span><strong>Auto</strong><small>QA 자동 선택 실행</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label><div class="be-voca-auto-options" hidden><label class="be-tool-toggle be-voca-option is-sub" data-voca-option="delay"><span><strong>랜덤 딜레이</strong><small>문제마다 2.0–8.0초 대기</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label><label class="be-tool-toggle be-voca-option is-sub" data-voca-option="wrong"><span><strong>오답 테스트</strong><small>정답 전 오답 1–3회 선택</small></span><input type="checkbox" disabled><i aria-hidden="true"></i></label></div></section>` : "";
     const selfCheckOption=isStudentPage?`<label class="be-tool-toggle be-self-check-toggle"><span><strong>자동 Self Check</strong><small>No Check를 매우만족으로 저장</small></span><input type="checkbox" checked><i aria-hidden="true"></i></label>`:"";
-    bar.innerHTML = `<button class="be-tool-trigger" type="button" aria-label="Better Esimson 메뉴"><img src="${extensionIcon}" alt=""></button><div class="be-tool-panel" hidden><div class="be-tool-head"><img class="be-tool-logo" src="${extensionIcon}" alt=""><p><strong>Better Esimson</strong><small>${supportsModernUi ? "설정" : isVocaHelperPage ? "보카 도우미 설정" : "이 페이지는 준비 중"}</small></p><button class="be-tool-close" type="button" aria-label="닫기">${icon("close")}</button></div>${supportsModernUi ? `<label class="be-tool-toggle be-design-toggle"><span><strong>새 디자인</strong><small>${supportsModernHeader?"Better Esimson 헤더 사용":"Better Esimson 화면 사용"}</small></span><input type="checkbox" ${state.modern ? "checked" : ""}><i aria-hidden="true"></i></label>${selfCheckOption}` : `<p class="be-tool-note">${isVocaHelperPage ? "보카 화면은 원본 디자인으로 표시됩니다." : "이 페이지는 아직 원본 그대로 표시됩니다."}</p>`}${vocaOptions}<a class="be-tool-credit" href="https://github.com/z1hxn/Better-Esimson" target="_blank" rel="noopener noreferrer" aria-label="Better Esimson GitHub 저장소"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.7a9.5 9.5 0 0 0-3 18.52c.48.09.65-.2.65-.46v-1.85c-2.66.58-3.22-1.13-3.22-1.13-.43-1.1-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.85 1.46 2.24 1.04 2.79.8.09-.62.33-1.04.61-1.28-2.12-.24-4.35-1.06-4.35-4.7 0-1.04.37-1.89.98-2.56-.1-.24-.43-1.21.09-2.52 0 0 .8-.26 2.61.98A9 9 0 0 1 12 7.19a9 9 0 0 1 2.38.32c1.81-1.23 2.61-.98 2.61-.98.52 1.31.19 2.28.09 2.52.61.67.98 1.52.98 2.56 0 3.65-2.23 4.45-4.36 4.69.34.3.65.88.65 1.78v2.68c0 .26.17.56.66.46A9.5 9.5 0 0 0 12 2.7Z"/></svg><span>Made by <strong>@z1hxn</strong></span></a></div>`;
+    const logoutConfirmOption=`<label class="be-tool-toggle be-logout-confirm-toggle"><span><strong>로그아웃 확인</strong><small>로그아웃 전에 한 번 더 확인</small></span><input type="checkbox"><i aria-hidden="true"></i></label>`;
+    bar.innerHTML = `<button class="be-tool-trigger" type="button" aria-label="Better Esimson 메뉴"><img src="${extensionIcon}" alt=""></button><div class="be-tool-panel" hidden><div class="be-tool-head"><img class="be-tool-logo" src="${extensionIcon}" alt=""><p><strong>Better Esimson</strong><small>${supportsModernUi ? "설정" : isVocaHelperPage ? "보카 도우미 설정" : "이 페이지는 준비 중"}</small></p><button class="be-tool-close" type="button" aria-label="닫기">${icon("close")}</button></div>${supportsModernUi ? `<label class="be-tool-toggle be-design-toggle"><span><strong>새 디자인</strong><small>${supportsModernHeader?"Better Esimson 헤더 사용":"Better Esimson 화면 사용"}</small></span><input type="checkbox" ${state.modern ? "checked" : ""}><i aria-hidden="true"></i></label>${selfCheckOption}${logoutConfirmOption}<button class="be-tool-onboarding" type="button">온보딩 다시 하기</button>` : `<p class="be-tool-note">${isVocaHelperPage ? "보카 화면은 원본 디자인으로 표시됩니다." : "이 페이지는 아직 원본 그대로 표시됩니다."}</p>`}${vocaOptions}<a class="be-tool-credit" href="https://github.com/z1hxn/Better-Esimson" target="_blank" rel="noopener noreferrer" aria-label="Better Esimson GitHub 저장소"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.7a9.5 9.5 0 0 0-3 18.52c.48.09.65-.2.65-.46v-1.85c-2.66.58-3.22-1.13-3.22-1.13-.43-1.1-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.85 1.46 2.24 1.04 2.79.8.09-.62.33-1.04.61-1.28-2.12-.24-4.35-1.06-4.35-4.7 0-1.04.37-1.89.98-2.56-.1-.24-.43-1.21.09-2.52 0 0 .8-.26 2.61.98A9 9 0 0 1 12 7.19a9 9 0 0 1 2.38.32c1.81-1.23 2.61-.98 2.61-.98.52 1.31.19 2.28.09 2.52.61.67.98 1.52.98 2.56 0 3.65-2.23 4.45-4.36 4.69.34.3.65.88.65 1.78v2.68c0 .26.17.56.66.46A9.5 9.5 0 0 0 12 2.7Z"/></svg><span>Made by <strong>@z1hxn</strong></span></a></div>`;
     document.body.appendChild(bar);
     const panel = bar.querySelector(".be-tool-panel");
     panel.addEventListener("pointerdown",(event)=>event.stopPropagation());
@@ -1002,6 +1054,17 @@
       storageGet("autoSelfCheck",({autoSelfCheck})=>{ selfCheckToggle.checked=autoSelfCheck!==false; });
       selfCheckToggle.addEventListener("change",(event)=>{ storageSet({autoSelfCheck:event.target.checked}); showToast(event.target.checked?"자동 Self Check를 켰어요.":"자동 Self Check를 껐어요.",event.target.checked?"success":"neutral"); });
     }
+    const logoutConfirmToggle=bar.querySelector(".be-logout-confirm-toggle input");
+    if(logoutConfirmToggle){
+      storageGet("confirmLogout",({confirmLogout})=>{ logoutConfirmToggle.checked=confirmLogout===true; });
+      logoutConfirmToggle.addEventListener("change",(event)=>{ storageSet({confirmLogout:event.target.checked}); showToast(event.target.checked?"로그아웃 전에 확인할게요.":"로그아웃 확인을 생략할게요.",event.target.checked?"success":"neutral"); });
+    }
+    bar.querySelector(".be-tool-onboarding")?.addEventListener("click",()=>{
+      setPanel(false);
+      storageSet({ onboardingCompleted:false });
+      bar.hidden=true;
+      maybeShowOnboarding(true);
+    });
     if (isVocaHelperPage) {
       const command = (action, enabled) => document.dispatchEvent(new CustomEvent("better-esimson-voca-command", { detail: { action, enabled } }));
       bar.querySelectorAll("[data-voca-option]").forEach((option) => option.querySelector("input")?.addEventListener("change", (event) => command(option.dataset.vocaOption, event.target.checked)));
@@ -1017,6 +1080,109 @@
       });
       setTimeout(() => command("state"), 50);
     }
+  }
+
+  function showToolbarIntro(bar) {
+    if(!bar || document.querySelector(".be-toolbar-tour")) return;
+    const tour=document.createElement("div");
+    tour.className="be-toolbar-tour";
+    tour.innerHTML=`<section role="dialog" aria-live="polite"><span class="be-toolbar-tour-tail"></span><p></p><button type="button"><span>다음</span><kbd>Enter</kbd></button></section>`;
+    document.body.appendChild(tour);
+    let stage=0;
+    const bubble=tour.querySelector("section"), message=tour.querySelector("p"), button=tour.querySelector("button"), label=button.querySelector("span");
+    const place=()=>{ const rect=bar.getBoundingClientRect(); const width=Math.min(330,innerWidth-32); bubble.style.width=`${width}px`; bubble.style.left=`${Math.max(16,Math.min(innerWidth-width-16,rect.right-width))}px`; bubble.style.top=`${Math.max(16,rect.top-150)}px`; };
+    const update=()=>{ message.textContent=stage===0?"여기에서 새 디자인, 자동 Self Check와 로그아웃 설정을 언제든 관리할 수 있어요.":"이제 준비 끝! Better Esimson과 함께 잘 해봐요."; label.textContent=stage===0?"다음":"완료"; place(); };
+    const finish=()=>{ document.removeEventListener("keydown",onKey); tour.classList.add("is-leaving"); bar.classList.remove("is-onboarding-target"); setTimeout(()=>tour.remove(),300); };
+    const advance=()=>{ if(stage===0){stage=1;update();return;} finish(); };
+    const onKey=(event)=>{ if(event.key==="Enter"){event.preventDefault();advance();} };
+    button.addEventListener("click",advance); document.addEventListener("keydown",onKey); addEventListener("resize",place,{once:true});
+    update(); requestAnimationFrame(()=>tour.classList.add("is-visible"));
+  }
+
+  function maybeShowOnboarding(force=false) {
+    if (isHomeworkPopup || isStudyQuestionPopup || isVocaHelperPage) {
+      const toolbar=document.getElementById("better-esimson-toolbar");
+      if(toolbar) toolbar.hidden=false;
+      return;
+    }
+    storageGet("onboardingCompleted", ({ onboardingCompleted }) => {
+      const toolbar=document.getElementById("better-esimson-toolbar");
+      if (!force && onboardingCompleted === true) { if(toolbar)toolbar.hidden=false; return; }
+      if (document.querySelector(".be-onboarding")) return;
+      if(toolbar)toolbar.hidden=true;
+      const choices = { designEnabled:true, autoSelfCheck:true, confirmLogout:false };
+      let step = 0;
+      const overlay = document.createElement("div");
+      overlay.className = "be-onboarding";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-label", "Better Esimson 시작 안내");
+      overlay.innerHTML = `<div class="be-onboarding-card"><header><img src="${extensionIcon}" alt=""><div><strong>Better Esimson</strong><span>처음 설정</span></div><a class="be-onboarding-credit" href="https://github.com/z1hxn/Better-Esimson" target="_blank" rel="noopener noreferrer" aria-label="Better Esimson GitHub 저장소"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.7a9.5 9.5 0 0 0-3 18.52c.48.09.65-.2.65-.46v-1.85c-2.66.58-3.22-1.13-3.22-1.13-.43-1.1-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.85 1.46 2.24 1.04 2.79.8.09-.62.33-1.04.61-1.28-2.12-.24-4.35-1.06-4.35-4.7 0-1.04.37-1.89.98-2.56-.1-.24-.43-1.21.09-2.52 0 0 .8-.26 2.61.98A9 9 0 0 1 12 7.19a9 9 0 0 1 2.38.32c1.81-1.23 2.61-.98 2.61-.98.52 1.31.19 2.28.09 2.52.61.67.98 1.52.98 2.56 0 3.65-2.23 4.45-4.36 4.69.34.3.65.88.65 1.78v2.68c0 .26.17.56.66.46A9.5 9.5 0 0 0 12 2.7Z"/></svg><span>Made by <strong>@z1hxn</strong></span></a></header><main>
+        <section class="be-onboarding-step is-active" data-step="0"><div class="be-onboarding-welcome"><span class="be-onboarding-logo"><img src="${extensionIcon}" alt="Better Esimson"></span><p>BETTER ESIMSON</p><div class="be-onboarding-title be-onboarding-welcome-title" role="heading" aria-level="2">환영해요</div><strong>더 깔끔하고 편리한 심슨을 시작해 볼까요?</strong><small>몇 가지 설정만 고르면 바로 사용할 수 있어요.</small><a class="be-onboarding-credit" href="https://github.com/z1hxn/Better-Esimson" target="_blank" rel="noopener noreferrer" aria-label="Better Esimson GitHub 저장소"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.7a9.5 9.5 0 0 0-3 18.52c.48.09.65-.2.65-.46v-1.85c-2.66.58-3.22-1.13-3.22-1.13-.43-1.1-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.85 1.46 2.24 1.04 2.79.8.09-.62.33-1.04.61-1.28-2.12-.24-4.35-1.06-4.35-4.7 0-1.04.37-1.89.98-2.56-.1-.24-.43-1.21.09-2.52 0 0 .8-.26 2.61.98A9 9 0 0 1 12 7.19a9 9 0 0 1 2.38.32c1.81-1.23 2.61-.98 2.61-.98.52 1.31.19 2.28.09 2.52.61.67.98 1.52.98 2.56 0 3.65-2.23 4.45-4.36 4.69.34.3.65.88.65 1.78v2.68c0 .26.17.56.66.46A9.5 9.5 0 0 0 12 2.7Z"/></svg><span>Made by <strong>@z1hxn</strong></span></a></div></section>
+        <section class="be-onboarding-step" data-step="1"><div class="be-onboarding-copy"><span>01 · DESIGN</span><div class="be-onboarding-title" role="heading" aria-level="2">어떤 화면을 사용할까요?</div><p>언제든 플로팅 설정에서 다시 바꿀 수 있어요.</p></div><div class="be-onboarding-designs"><button type="button" data-design="false"><span class="be-onboarding-preview is-old">${[1,2,3].map((number)=>`<img src="${chrome.runtime.getURL(`image/old${number}.png`)}" alt="기존 심슨 화면 미리보기 ${number}" loading="eager" decoding="sync">`).join("")}<i>ORIGINAL<br>SIMSON</i></span><strong>기존 UI</strong><small>익숙한 원본 화면</small><b>선택</b></button><button type="button" data-design="true" class="is-selected"><span class="be-onboarding-preview is-new">${[1,2,3].map((number)=>`<img src="${chrome.runtime.getURL(`image/new${number}.png`)}" alt="Better Esimson 화면 미리보기 ${number}" loading="eager" decoding="sync">`).join("")}<i>BETTER<br>ESIMSON</i></span><strong>새 디자인</strong><small>깔끔하고 현대적인 화면</small><b>추천</b></button></div></section>
+        <section class="be-onboarding-step" data-step="2"><div class="be-onboarding-copy"><span>02 · OPTIONS</span><div class="be-onboarding-title" role="heading" aria-level="2">편의 기능을 설정해요</div><p>필요한 기능만 골라 사용할 수 있어요.</p></div><div class="be-onboarding-options"><label><span><i>✓</i><strong>자동 Self Check</strong><small>No Check를 매우만족으로 자동 저장해요.</small></span><input type="checkbox" data-option="autoSelfCheck" checked><b></b></label><label><span><i>?</i><strong>로그아웃 확인</strong><small>로그아웃 전에 한 번 더 물어봐요.</small></span><input type="checkbox" data-option="confirmLogout"><b></b></label></div></section>
+        <section class="be-onboarding-step" data-step="3"><div class="be-onboarding-copy"><span>03 · SHORTCUTS</span><div class="be-onboarding-title" role="heading" aria-level="2">키보드로 더 빠르게</div><p>입력창이 선택되지 않았을 때 바로 이동할 수 있어요.</p></div><div class="be-onboarding-shortcuts"><article><strong>홈</strong><p><kbd>S</kbd><span>학생시스템 열기</span></p></article><article><strong>학생시스템</strong>${[["1","대시보드"],["2","성적 조회"],["3","나의 포인트"],["4","선생님 상담"],["5","포트폴리오"],["6","My 보카"],["M","학생시스템 나가기"]].map(([key,label])=>`<p><kbd>${key}</kbd><span>${label}</span></p>`).join("")}</article><article><strong>전역</strong><p><kbd>L</kbd><span>로그인 · 로그아웃</span></p></article></div></section>
+      </main><footer><button class="be-onboarding-back" type="button" hidden><kbd>Esc</kbd><span>이전</span></button><span><i></i><i></i><i></i><i></i></span><button class="be-onboarding-next" type="button"><span>시작하기</span><kbd>Enter</kbd></button></footer></div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelectorAll(".be-onboarding-preview img").forEach((image)=>{
+        image.addEventListener("error",()=>{
+          image.classList.add("is-unavailable");
+          image.closest(".be-onboarding-preview")?.classList.add("has-load-error");
+        },{once:true});
+      });
+      const steps = Array.from(overlay.querySelectorAll(".be-onboarding-step"));
+      const footerDots = Array.from(overlay.querySelectorAll("footer>span i"));
+      const back = overlay.querySelector(".be-onboarding-back");
+      const next = overlay.querySelector(".be-onboarding-next");
+      const update = () => {
+        steps.forEach((section,index)=>section.classList.toggle("is-active",index===step));
+        footerDots.forEach((dot,index)=>dot.classList.toggle("is-active",index===step));
+        back.hidden = step === 0;
+        next.querySelector("span").textContent = step === 0 ? "시작하기" : step === steps.length - 1 ? "설정 완료" : "다음";
+      };
+      overlay.querySelectorAll("[data-design]").forEach((button)=>button.addEventListener("click",()=>{ choices.designEnabled=button.dataset.design==="true"; overlay.querySelectorAll("[data-design]").forEach((item)=>item.classList.toggle("is-selected",item===button)); }));
+      overlay.querySelectorAll("[data-option]").forEach((input)=>input.addEventListener("change",()=>{ choices[input.dataset.option]=input.checked; }));
+      back.addEventListener("click",()=>{ step=Math.max(0,step-1); update(); });
+      next.addEventListener("click",()=>{
+        if(step<steps.length-1){ step+=1; update(); return; }
+        storageSet({ ...choices, onboardingCompleted:true });
+        setModern(choices.designEnabled);
+        const card=overlay.querySelector(".be-onboarding-card");
+        const cardRect=card.getBoundingClientRect();
+        let targetX=innerWidth-41;
+        let targetY=innerHeight-41;
+        if(toolbar){
+          toolbar.hidden=false;
+          toolbar.style.visibility="hidden";
+          const triggerRect=toolbar.querySelector(".be-tool-trigger")?.getBoundingClientRect();
+          if(triggerRect?.width){ targetX=triggerRect.left+triggerRect.width/2; targetY=triggerRect.top+triggerRect.height/2; }
+          toolbar.hidden=true;
+          toolbar.style.removeProperty("visibility");
+        }
+        card.style.setProperty("--be-collapse-x",`${targetX-(cardRect.left+cardRect.width/2)}px`);
+        card.style.setProperty("--be-collapse-y",`${targetY-(cardRect.top+cardRect.height/2)}px`);
+        requestAnimationFrame(()=>overlay.classList.add("is-collapsing"));
+        setTimeout(()=>{
+          overlay.remove();
+          if(toolbar){ toolbar.hidden=false; toolbar.classList.add("is-onboarding-target"); }
+          showToolbarIntro(toolbar);
+        },760);
+      });
+      overlay.addEventListener("keydown",(event)=>{
+        if(event.key === "Enter"){
+          event.preventDefault();
+          next.click();
+          return;
+        }
+        if(event.key === "Escape" && step > 0){
+          event.preventDefault();
+          back.click();
+        }
+      });
+      overlay.tabIndex = -1;
+      update();
+      requestAnimationFrame(()=>{ overlay.classList.add("is-visible"); overlay.focus({ preventScroll:true }); });
+    });
   }
 
   function enableToolbarDrag(bar, handle, setPanel) {
@@ -1087,6 +1253,7 @@
     if (toggle) toggle.checked = enabled;
   }
 
+  bindNavigationShortcuts();
   if (isHomeworkPopup) {
     storageGet(["designEnabled","autoSelfCheck"],({designEnabled,autoSelfCheck})=>{ renderHomeworkPopup(readHomeworkPopup(),autoSelfCheck!==false); setModern(designEnabled!==false); });
     return;
@@ -1109,6 +1276,7 @@
   if (supportsModernHeader) renderLegacyModernHeader(readPage());
   createToolbar();
   if (supportsModernUi) storageGet("designEnabled", ({ designEnabled }) => setModern(designEnabled !== false));
+  maybeShowOnboarding();
 })();
 
 // Integrated Esimson Voca Helper. Keep this isolated from non-vocabulary pages.
