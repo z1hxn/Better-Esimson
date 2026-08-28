@@ -12,13 +12,17 @@
     if (!id) return;
     const target = Array.from(document.querySelectorAll("[data-better-esimson-action]")).find((node) => node.getAttribute("data-better-esimson-action") === id);
     if (!target) return;
+    if (target.matches?.("select")) {
+      target.dispatchEvent(new Event("change", { bubbles:true, cancelable:true }));
+      return;
+    }
     // Submit controls need their native click so inline validation and the
     // form's default POST both run. Calling only `onclick` skips submission.
     if (target.matches?.('button, input[type="submit"], input[type="image"]')) {
       target.click();
       return;
     }
-    const source = target.getAttribute("href") || target.getAttribute("onclick") || "";
+    const source = target.getAttribute("href") || target.getAttribute("onclick") || target.getAttribute("onchange") || "";
     const call = source.match(/^\s*javascript:\s*(?:return\s+)?([\w$.]+)\s*\(([\s\S]*)\)\s*;?\s*(?:return\s+false\s*;?)?\s*$/i) || source.match(/^\s*(?:return\s+)?([\w$.]+)\s*\(([\s\S]*)\)\s*;?\s*(?:return\s+false\s*;?)?\s*$/i);
     if (call) {
       const fn = call[1].split(".").reduce((value, key) => value?.[key], window);

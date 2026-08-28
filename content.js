@@ -2,7 +2,8 @@
   "use strict";
 
   const isHomeworkPopup = location.pathname.toLowerCase() === "/popup/popup_homework_check.aspx";
-  if ((window.top !== window && !isHomeworkPopup) || document.getElementById("better-esimson-toolbar")) return;
+  const isStudyQuestionPopup = location.pathname.toLowerCase() === "/popup/popup_mogosa_jajujang_popup.aspx";
+  if ((window.top !== window && !isHomeworkPopup && !isStudyQuestionPopup) || document.getElementById("better-esimson-toolbar")) return;
 
   const HOME_PATHS = new Set(["/", "/index.aspx", "/index.asp"]);
   const isHome = HOME_PATHS.has(location.pathname.toLowerCase());
@@ -18,12 +19,13 @@
   const isLegacyStudentPage = isStudentPage && !isStudentDashboard && !isGradesPage && !isGradeDetailPage && !isPointsPage && !isCounselListPage && !isCounselDetailPage && !isCounselWritePage;
   const isVocaHelperPage = new Set(["/exam/high_voca_start.aspx", "/exam/high_voca01_test.aspx", "/exam/high_voca02_test.aspx"]).has(location.pathname.toLowerCase());
   const MOCK_EXAM_PREVIEW = false;
-  const hasModernPage = isHome || isLoginPage || isStudentDashboard || isGradesPage || isGradeDetailPage || isPointsPage || isCounselListPage || isCounselDetailPage || isCounselWritePage || isLegacyStudentPage || isHomeworkPopup;
-  const supportsModernHeader = !isHomeworkPopup && !hasModernPage && Boolean(document.querySelector("#header .nav, #header .navi"));
+  const hasModernPage = isHome || isLoginPage || isStudentDashboard || isGradesPage || isGradeDetailPage || isPointsPage || isCounselListPage || isCounselDetailPage || isCounselWritePage || isLegacyStudentPage || isHomeworkPopup || isStudyQuestionPopup;
+  const supportsModernHeader = !isHomeworkPopup && !isStudyQuestionPopup && !hasModernPage && Boolean(document.querySelector("#header .nav, #header .navi"));
   const supportsModernUi = hasModernPage || supportsModernHeader;
   const originalNodes = Array.from(document.body.children);
   const extensionIcon = chrome.runtime.getURL("icon.png");
   const textLogo = chrome.runtime.getURL("logo/text-logo.png");
+  const symbolOutline = chrome.runtime.getURL("logo/symbol-outline.png");
   const state = {
     modern: supportsModernUi,
     menuOpen: false,
@@ -47,8 +49,8 @@
   let legacyActionSequence = 0;
   function triggerLegacyNode(node, preferredId = "") {
     if (!node) return false;
-    const target = node.closest?.("a,button,input,[onclick]") || node;
-    const source = `${target.getAttribute?.("href") || ""} ${target.getAttribute?.("onclick") || ""}`;
+    const target = node.closest?.("a,button,input,select,[onclick],[onchange]") || node;
+    const source = `${target.getAttribute?.("href") || ""} ${target.getAttribute?.("onclick") || ""} ${target.getAttribute?.("onchange") || ""}`;
     if (/javascript\s*:|\bonclick\s*=|[\w$.]+\s*\(/i.test(source)) {
       const id = preferredId || target.getAttribute("data-better-esimson-action") || `legacy-action-${++legacyActionSequence}`;
       target.setAttribute("data-better-esimson-action", id);
@@ -175,6 +177,8 @@
     spark: '<svg viewBox="0 0 24 24"><path d="m12 3 1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3Z"/></svg>',
     grid: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>'
     ,sidebar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M17 9l-3 3 3 3"/></svg>',
+    print: '<svg viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 13h10v8H7z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg>',
     download: '<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>',
     attendance: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
     absence: '<svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg>',
@@ -374,7 +378,16 @@
     root.querySelector(".be-reexam-more")?.addEventListener("click", () => triggerLegacyNode(document.querySelector('a[href*="Reexam_go"]')));
     root.querySelector('[data-calendar="prev"]')?.addEventListener("click", () => triggerLegacyNode(document.getElementById("ImageButton1")));
     root.querySelector('[data-calendar="next"]')?.addEventListener("click", () => triggerLegacyNode(document.getElementById("ImageButton2")));
-    root.querySelector(".be-calendar-today")?.addEventListener("click", () => location.reload());
+    root.querySelector(".be-calendar-today")?.addEventListener("click", () => {
+      const now = new Date();
+      const year = document.getElementById("cmbyear");
+      const month = document.getElementById("cmbmonth");
+      if (!year || !month) { location.reload(); return; }
+      year.value = String(now.getFullYear());
+      month.value = String(now.getMonth() + 1).padStart(2, "0");
+      if (!month.value) month.value = String(now.getMonth() + 1);
+      triggerLegacyNode(month);
+    });
     root.querySelectorAll("[data-calendar-class]").forEach((button)=>button.addEventListener("click",()=>triggerLegacyNode(document.getElementById(button.dataset.calendarClass))));
   }
 
@@ -513,22 +526,213 @@
       const cells=Array.from(row.querySelectorAll(":scope > td"));
       return cells.length>=4 ? { number:clean(cells[0].textContent),type:clean(cells[1].textContent),result:clean(cells[2].textContent),wrongRate:clean(cells[3].textContent) } : null;
     }).filter(Boolean);
-    const noteQuestionHtml = document.querySelector("#tab4 .boardlisttable6")?.innerHTML || "";
-    const noteAnswerHtml = document.querySelector("#tab5 .boardlisttable6")?.innerHTML || "";
+    const refineNoteCopy = (html) => {
+      if (!html) return "";
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = html;
+      const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach((node) => {
+        node.nodeValue = node.nodeValue
+          .replace(/화목반은\s*목요일,\s*월수금반은\s*금요일에\s*Open됩니다\.?/gi, "정답과 해설은 수업 일정에 맞춰 공개됩니다.")
+          .replace(/1\.\s*작가가\s*하고자\s*하는\s*말을\s*한글과\s*영어로\s*쓰기/gi, "1. 작가의 요지")
+          .replace(/2\.\s*중요\s*단어\s*8개\s*정리하고\s*외우기/gi, "2. 단어 정리")
+          .replace(/4\.\s*어법확인\s*\(\s*내신\s*,?\s*수능\s*기출문제\s*\)/gi, "4. 추가 어법")
+          .replace(/(?:1\)|1>)\s*(?:한글|도식화\s*하기|문장\s*도식화하기|위\s*문장을\s*도식화하고)\s*:?/gi, "")
+          .replace(/(?:2\)|2>)\s*(?:영어|해석\s*하기|해석하기|해석하시오)\s*\.?\s*:?/gi, "");
+      });
+      wrapper.querySelectorAll("a").forEach((anchor) => {
+        const label = clean(anchor.textContent);
+        const href = anchor.getAttribute("href") || "";
+        if (/프린트/.test(label)) {
+          anchor.className = "be-note-action be-note-print";
+          anchor.setAttribute("aria-label", "학습 노트 인쇄");
+          anchor.setAttribute("title", "인쇄");
+          anchor.dataset.legacyHref = href;
+          anchor.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/></svg>';
+        } else if (/\d+번\s*문제보기/.test(label)) {
+          const number = label.match(/\d+번/)?.[0] || "문항";
+          anchor.className = "be-note-action be-note-question";
+          anchor.dataset.legacyHref = href;
+          anchor.innerHTML = `<span>${escapeHtml(number)}</span><strong>문제 확인</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`;
+        }
+      });
+      wrapper.querySelectorAll("td[colspan]").forEach((cell) => {
+        let previousWasBreak=false;
+        Array.from(cell.childNodes).forEach((node) => {
+          if(node.nodeType===Node.TEXT_NODE){
+            if(!node.nodeValue.trim()){ node.remove(); return; }
+            previousWasBreak=false;
+            return;
+          }
+          if(node.nodeType===Node.ELEMENT_NODE&&node.tagName==="BR"){
+            if(previousWasBreak)node.remove();
+            else previousWasBreak=true;
+            return;
+          }
+          previousWasBreak=false;
+        });
+        while(cell.firstElementChild?.tagName==="BR")cell.firstElementChild.remove();
+        while(cell.lastElementChild?.tagName==="BR")cell.lastElementChild.remove();
+        if(/구문분석\s*&\s*해석/.test(clean(cell.querySelector(":scope > span")?.textContent))){
+          Array.from(cell.childNodes).forEach((node)=>{
+            if(node.nodeType!==Node.TEXT_NODE||!/^\s*\d+\.\s+/.test(node.nodeValue))return;
+            const sentence=document.createElement("p");
+            sentence.className="be-note-analysis-sentence";
+            sentence.textContent=node.nodeValue.trim();
+            node.replaceWith(sentence);
+          });
+          cell.querySelectorAll(":scope > .be-note-analysis-sentence").forEach((sentence)=>{
+            while(sentence.previousSibling?.nodeType===Node.ELEMENT_NODE&&sentence.previousSibling.tagName==="BR")sentence.previousSibling.remove();
+            while(sentence.nextSibling?.nodeType===Node.ELEMENT_NODE&&sentence.nextSibling.tagName==="BR")sentence.nextSibling.remove();
+          });
+        }
+      });
+      return wrapper.innerHTML;
+    };
+    const addRoundTabs = (html) => {
+      if (!html) return "";
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = html;
+      const table = wrapper.querySelector(":scope > table");
+      if (!table) return html;
+      const rows = Array.from(table.rows);
+      const starts = rows.map((row,index) => {
+        const cells = Array.from(row.cells);
+        const label = clean(cells[1]?.textContent);
+        return clean(cells[0]?.textContent) === "회차" && /^\d+회차$/.test(label) ? { index,label } : null;
+      }).filter(Boolean);
+      const labels = [...new Set(starts.map((item) => item.label))];
+      if (labels.length < 2) return html;
+      const groups = starts.map((start,index) => ({
+        label:start.label,
+        rows:rows.slice(start.index,starts[index+1]?.index ?? rows.length)
+      }));
+      const rounds = document.createElement("div");
+      rounds.className = "be-note-rounds";
+      const tabs = document.createElement("div");
+      tabs.className = "be-note-round-tabs";
+      tabs.setAttribute("role","tablist");
+      labels.forEach((label,index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.noteRound = label;
+        button.classList.toggle("is-active",index === 0);
+        button.setAttribute("role","tab");
+        button.setAttribute("aria-selected",String(index === 0));
+        button.textContent = label;
+        tabs.appendChild(button);
+      });
+      const printAction=table.querySelector(".be-note-print")?.cloneNode(true);
+      if(printAction){
+        printAction.classList.add("be-note-round-print");
+        printAction.setAttribute("aria-label","자주장 인쇄");
+        printAction.setAttribute("title","자주장 인쇄");
+        printAction.insertAdjacentHTML("beforeend","<span>인쇄</span>");
+        tabs.appendChild(printAction);
+      }
+      rounds.appendChild(tabs);
+      labels.forEach((label,index) => {
+        const panel = document.createElement("div");
+        panel.className = "be-note-round-panel";
+        panel.dataset.noteRoundPanel = label;
+        panel.hidden = index !== 0;
+        const roundTable = table.cloneNode(false);
+        table.querySelector(":scope > colgroup") && roundTable.appendChild(table.querySelector(":scope > colgroup").cloneNode(true));
+        const body = document.createElement("tbody");
+        groups.filter((group) => group.label === label).forEach((group) => group.rows.forEach((row,rowIndex) => {
+          let clone = row.cloneNode(true);
+          if (rowIndex === 0) {
+            const cells=Array.from(row.cells);
+            const questionAction=row.querySelector(".be-note-question")?.outerHTML||"";
+            const questionNumber=(clean(row.querySelector(".be-note-question")?.textContent).match(/\d+번/)||["문항"])[0];
+            const type=clean(cells[5]?.textContent)||"문제";
+            clone=document.createElement("tr");
+            clone.className="be-note-question-start";
+            clone.innerHTML=`<td colspan="6"><div class="be-note-question-bar"><div><strong>${escapeHtml(questionNumber)}</strong><span>${escapeHtml(type)}</span></div><div>${questionAction}<button class="be-note-copy-question" type="button" aria-label="이 문제 복사" title="복사"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span>복사</span></button></div></div></td>`;
+          }
+          body.appendChild(clone);
+        }));
+        roundTable.appendChild(body);
+        panel.appendChild(roundTable);
+        rounds.appendChild(panel);
+      });
+      table.replaceWith(rounds);
+      return wrapper.innerHTML;
+    };
+    const noteQuestionHtml = addRoundTabs(refineNoteCopy(document.querySelector("#tab4 .boardlisttable6")?.innerHTML || ""));
+    const noteAnswerHtml = refineNoteCopy(document.querySelector("#tab5 .boardlisttable6")?.innerHTML || "");
     const loginName = clean(document.querySelector("#login_box b")?.textContent).replace(/학생$/,"") || "학생";
     return { ...base, title:clean(document.getElementById("spnTitle")?.textContent), subjects, comparisons, questions, noteQuestionHtml, noteAnswerHtml, studentName:loginName };
   }
 
   function renderGradeDetail(data) {
+    ["onselectstart","ondragstart","oncontextmenu"].forEach((attribute)=>document.body.removeAttribute(attribute));
+    document.body.onselectstart=null;
+    document.body.ondragstart=null;
+    document.body.oncontextmenu=null;
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root";
     const total=data.subjects.find((item)=>item.label.includes("총점"));
     const rank=data.subjects.find((item)=>item.label.includes("석차"));
     const wrong=data.questions.filter((item)=>item.result.toUpperCase()==="X");
-    root.innerHTML=`${studentSidebar(data,2,data.studentName)}<div class="be-student-page">${studentPageHeader("성적 상세",data,data.studentName)}<main class="be-student-main be-grade-detail-page"><section class="be-detail-title"><div><a class="be-back-link" href="/mypage/sub09_12.aspx">${icon("arrow")}<span>성적 목록으로</span></a><span class="be-kicker">EXAM REPORT</span><h1>${escapeHtml(data.title||"시험 성적 상세")}</h1></div><div class="be-detail-total"><small>총점 / 평균</small><strong>${escapeHtml(total?.score||"-")}</strong><span>전체 석차 ${escapeHtml(rank?.score||"-")}</span></div></section><section class="be-subject-cards">${data.subjects.filter((item)=>!["총점/평균","석차"].includes(item.label)).map((item)=>`<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.score)}</strong><small>평균 ${escapeHtml(item.average||"-")}</small></article>`).join("")}</section><section class="be-detail-comparison">${data.comparisons.map((item)=>`<article><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.rank)}</strong><span>${escapeHtml(item.score)}</span></article>`).join("")}</section><div class="be-detail-grid"><section class="be-student-card"><div class="be-card-head"><div><span>ANSWER SHEET</span><h2>문항별 결과</h2></div><small>${data.questions.length-wrong.length}개 정답 · ${wrong.length}개 오답</small></div><div class="be-answer-grid">${data.questions.map((item)=>`<button type="button" class="${item.result.toUpperCase()==="X"?"is-wrong":"is-correct"}" data-question-type="${escapeHtml(item.type)}"><b>${escapeHtml(item.number)}</b><span>${escapeHtml(item.result)}</span><small>${escapeHtml(item.wrongRate)}</small></button>`).join("")}</div></section><section class="be-student-card be-wrong-card"><div class="be-card-head"><div><span>REVIEW</span><h2>틀린 문항</h2></div></div>${wrong.length?wrong.map((item)=>`<div><b>${escapeHtml(item.number)}번</b><span>${escapeHtml(item.type)}</span><em>오답률 ${escapeHtml(item.wrongRate)}</em></div>`).join(""):`<p>모든 문항을 맞혔습니다.</p>`}</section></div>${data.noteQuestionHtml||data.noteAnswerHtml?`<section class="be-student-card be-study-note"><div class="be-card-head"><div><span>STUDY NOTE</span><h2>자주장 분석 노트</h2></div><div class="be-note-tabs"><button class="is-active" type="button" data-note="question">문제지</button><button type="button" data-note="answer">정답 · 해설</button></div></div><div class="be-note-paper" data-note-panel="question">${data.noteQuestionHtml||"<p>등록된 문제지가 없습니다.</p>"}</div><div class="be-note-paper" data-note-panel="answer" hidden>${data.noteAnswerHtml||"<p>등록된 해설이 없습니다.</p>"}</div></section>`:""}</main></div>`;
+    root.innerHTML=`${studentSidebar(data,2,data.studentName)}<div class="be-student-page">${studentPageHeader("성적 상세",data,data.studentName)}<main class="be-student-main be-grade-detail-page"><section class="be-detail-title"><div><a class="be-back-link" href="/mypage/sub09_12.aspx">${icon("arrow")}<span>성적 목록으로</span></a><span class="be-kicker">EXAM REPORT</span><h1>${escapeHtml(data.title||"시험 성적 상세")}</h1></div><div class="be-detail-total"><small>총점 / 평균</small><strong>${escapeHtml(total?.score||"-")}</strong><span>전체 석차 ${escapeHtml(rank?.score||"-")}</span></div></section><section class="be-subject-cards">${data.subjects.filter((item)=>!["총점/평균","석차"].includes(item.label)).map((item)=>`<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.score)}</strong><small>평균 ${escapeHtml(item.average||"-")}</small></article>`).join("")}</section><section class="be-detail-comparison">${data.comparisons.map((item)=>`<article><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.rank)}</strong><span>${escapeHtml(item.score)}</span></article>`).join("")}</section><div class="be-detail-grid"><section class="be-student-card"><div class="be-card-head"><div><span>ANSWER SHEET</span><h2>문항별 결과</h2></div><small>${data.questions.length-wrong.length}개 정답 · ${wrong.length}개 오답</small></div><div class="be-answer-grid">${data.questions.map((item)=>`<button type="button" class="${item.result.toUpperCase()==="X"?"is-wrong":"is-correct"}" data-question-type="${escapeHtml(item.type)}"><b>${escapeHtml(item.number)}</b><span>${escapeHtml(item.result)}</span><small>${escapeHtml(item.wrongRate)}</small></button>`).join("")}</div></section><section class="be-student-card be-wrong-card"><div class="be-card-head"><div><span>REVIEW</span><h2>틀린 문항</h2></div></div>${wrong.length?wrong.map((item)=>`<div><b>${escapeHtml(item.number)}번</b><span>${escapeHtml(item.type)}</span><em>오답률 ${escapeHtml(item.wrongRate)}</em></div>`).join(""):`<p>모든 문항을 맞혔습니다.</p>`}</section></div>${data.noteQuestionHtml||data.noteAnswerHtml?`<section class="be-student-card be-study-note"><div class="be-card-head"><div><span>STUDY NOTE</span><h2>자주장 학습 노트</h2><p>자주장 문제 풀이 및 정답·해설</p></div><div class="be-note-tabs"><button class="is-active" type="button" data-note="question">문제 풀이</button><button type="button" data-note="answer">정답 및 해설</button></div></div><div class="be-note-paper" data-note-panel="question">${data.noteQuestionHtml||'<p class="be-note-empty">등록된 문제가 없습니다.</p>'}</div><div class="be-note-paper" data-note-panel="answer" hidden>${data.noteAnswerHtml||'<p class="be-note-empty">등록된 정답 및 해설이 없습니다.</p>'}</div></section>`:""}</main></div>`;
     document.body.appendChild(root); bindStudentShell(root);
     root.querySelectorAll(".be-note-tabs button").forEach((button)=>button.addEventListener("click",()=>{
       root.querySelectorAll(".be-note-tabs button").forEach((item)=>item.classList.toggle("is-active",item===button));
       root.querySelectorAll("[data-note-panel]").forEach((panel)=>{ panel.hidden=panel.dataset.notePanel!==button.dataset.note; });
+    }));
+    root.querySelectorAll(".be-note-round-tabs button").forEach((button)=>button.addEventListener("click",()=>{
+      const rounds=button.closest(".be-note-rounds");
+      rounds.querySelectorAll(".be-note-round-tabs button").forEach((item)=>{ const active=item===button; item.classList.toggle("is-active",active); item.setAttribute("aria-selected",String(active)); });
+      rounds.querySelectorAll("[data-note-round-panel]").forEach((panel)=>{ panel.hidden=panel.dataset.noteRoundPanel!==button.dataset.noteRound; });
+    }));
+    root.querySelectorAll(".be-note-copy-question").forEach((button)=>button.addEventListener("click",async()=>{
+      const questionRow=button.closest("tr");
+      const questionNumber=clean(questionRow?.querySelector(".be-note-question-bar>div:first-child>strong")?.textContent)||"문항";
+      const questionType=clean(questionRow?.querySelector(".be-note-question-bar>div:first-child>span")?.textContent)||"문제";
+      const sections=[];
+      let row=button.closest("tr");
+      while(row){
+        if(row!==questionRow&&row.classList.contains("be-note-question-start"))break;
+        if(row===questionRow){ row=row.nextElementSibling; continue; }
+        const copy=row.cloneNode(true);
+        copy.querySelectorAll(".be-note-action,.be-note-copy-question,script,style,button,input").forEach((item)=>item.remove());
+        const text=(copy.innerText||copy.textContent||"")
+          .replace(/\u00a0/g," ")
+          .replace(/[ \t]+\n/g,"\n")
+          .replace(/\n[ \t]+/g,"\n")
+          .replace(/[ \t]{2,}/g," ")
+          .replace(/\n{3,}/g,"\n\n")
+          .trim();
+        if(text)sections.push(text);
+        row=row.nextElementSibling;
+      }
+      const text=[
+        "심슨어학원",
+        `문제번호: ${questionNumber}  |  문제유형: ${questionType}`,
+        sections.length&&`[요구사항]\n${sections.join("\n\n")}`
+      ].filter(Boolean).join("\n\n");
+      try { await navigator.clipboard.writeText(text); showToast("문제지 형식으로 복사했어요."); }
+      catch { showToast("문제를 복사하지 못했어요.","error"); }
+    }));
+    document.addEventListener("keydown",(event)=>{
+      if(!(event.ctrlKey||event.metaKey)||event.key.toLowerCase()!=="a")return;
+      if(event.target.closest?.("input,textarea,select,[contenteditable='true']"))return;
+      const panel=root.querySelector('.be-note-paper[data-note-panel]:not([hidden])');
+      if(!panel)return;
+      event.preventDefault();
+      const range=document.createRange();
+      range.selectNodeContents(panel);
+      const selection=getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+    root.querySelectorAll(".be-note-action").forEach((anchor)=>anchor.addEventListener("click",(event)=>{
+      event.preventDefault();
+      const href=anchor.dataset.legacyHref;
+      const original=Array.from(document.querySelectorAll("a[href]")).find((item)=>!root.contains(item)&&item.getAttribute("href")===href);
+      triggerLegacyNode(original);
     }));
   }
 
@@ -590,7 +794,7 @@
 
   function renderCounselDetail(data) {
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root";
-    root.innerHTML=counselShell(data,data.studentName,`<section class="be-counsel-detail-head"><span class="be-kicker">COUNSEL DETAIL</span><h1>${escapeHtml(data.title)}</h1><a href="/mypage/sub09_04.aspx">${icon("arrow")} 상담 목록</a><span class="be-status-badge ${data.answered?"is-complete":""}">${data.answered?"답변 완료":"답변 대기"}</span></section><section class="be-student-card be-counsel-thread"><article class="is-student"><header><div class="be-counsel-person"><i>${escapeHtml(data.studentName.slice(0,1))}</i><strong>${escapeHtml(data.studentName)}</strong></div>${data.question.time?`<time>${escapeHtml(data.question.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.question.content)}</p></article>${data.answered?`<article class="is-teacher"><header><div class="be-counsel-person"><i>${escapeHtml(data.teacherName.slice(0,1))}</i><strong>${escapeHtml(data.teacherName)} 선생님</strong></div>${data.answer.time?`<time>${escapeHtml(data.answer.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.answer.content)}</p>${data.attachments.length?`<div class="be-counsel-files"><span>첨부파일</span>${data.attachments.map((file)=>`<a href="${escapeHtml(file.href)}" download>${icon("download")}<strong>${escapeHtml(file.name)}</strong><small>다운로드</small></a>`).join("")}</div>`:""}</article>`:`<div class="be-counsel-waiting"><strong>선생님의 답변을 기다리고 있어요.</strong><p>답변이 등록되면 이곳에서 확인할 수 있습니다.</p></div>`}</section>`);
+    root.innerHTML=counselShell(data,data.studentName,`<section class="be-counsel-detail-head"><span class="be-kicker">COUNSEL DETAIL</span><h1>${escapeHtml(data.title)}</h1><a href="/mypage/sub09_04.aspx">${icon("arrow")} 상담 목록</a><span class="be-status-badge ${data.answered?"is-complete":""}">${data.answered?"답변 완료":"답변 대기"}</span></section><section class="be-student-card be-counsel-thread"><header class="be-counsel-thread-title"><div><span>상담 제목</span><h1>${escapeHtml(data.title)}</h1></div><span class="be-status-badge ${data.answered?"is-complete":""}">${data.answered?"답변 완료":"답변 대기"}</span></header><article class="is-student"><header><div class="be-counsel-person"><i>${escapeHtml(data.studentName.slice(0,1))}</i><strong>${escapeHtml(data.studentName)}</strong></div>${data.question.time?`<time>${escapeHtml(data.question.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.question.content)}</p></article>${data.answered?`<article class="is-teacher"><header><div class="be-counsel-person"><i>${escapeHtml(data.teacherName.slice(0,1))}</i><strong>${escapeHtml(data.teacherName)} 선생님</strong></div>${data.answer.time?`<time>${escapeHtml(data.answer.time)}</time>`:""}</header><p class="be-counsel-message">${escapeHtml(data.answer.content)}</p>${data.attachments.length?`<div class="be-counsel-files"><span>첨부파일</span>${data.attachments.map((file)=>`<a href="${escapeHtml(file.href)}" download>${icon("download")}<strong>${escapeHtml(file.name)}</strong><small>다운로드</small></a>`).join("")}</div>`:""}</article>`:`<div class="be-counsel-waiting"><strong>선생님의 답변을 기다리고 있어요.</strong><p>답변이 등록되면 이곳에서 확인할 수 있습니다.</p></div>`}</section>`);
     document.body.appendChild(root); bindStudentShell(root);
   }
 
@@ -603,9 +807,9 @@
 
   function renderCounselWrite(data) {
     const root=document.createElement("div"); root.id="better-esimson-root"; root.className="be-student-root";
-    root.innerHTML=counselShell(data,data.studentName,`<section class="be-student-welcome"><div><span class="be-kicker">NEW COUNSEL</span><h1>새 상담 작성</h1><p>상담할 선생님과 유형을 선택하고 내용을 작성해 주세요.</p></div><a class="be-counsel-list-link" href="/mypage/sub09_04.aspx">상담 목록</a></section><section class="be-student-card be-counsel-form"><label><span>제목</span><input id="be-counsel-title" type="text" maxlength="100" placeholder="상담 제목을 입력하세요"></label><fieldset><legend>상담할 선생님</legend><div class="be-teacher-grid">${data.teachers.map((teacher,index)=>`<label><input type="radio" name="be-teacher" value="${escapeHtml(teacher.value)}" ${index===0?"checked":""}><span><img src="${escapeHtml(teacher.image)}" alt=""><strong>${escapeHtml(teacher.name)}</strong><small>${escapeHtml(teacher.subject||"담당 선생님")}</small></span></label>`).join("")}</div></fieldset><label><span>상담 유형</span><select id="be-counsel-kind"><option value="">상담 유형을 선택하세요</option>${data.kinds.map((kind)=>`<option value="${escapeHtml(kind.value)}">${escapeHtml(kind.label)}</option>`).join("")}</select></label><label><span>내용</span><textarea id="be-counsel-content" rows="9" placeholder="상담 내용을 구체적으로 작성해 주세요"></textarea><small>한글, 영문 및 일반적인 문장부호를 사용할 수 있습니다.</small></label><div class="be-counsel-form-actions"><a href="/mypage/sub09_04.aspx">취소</a><button type="button" class="be-counsel-submit">상담 등록</button></div></section>`);
+    root.innerHTML=counselShell(data,data.studentName,`<section class="be-student-welcome"><div><span class="be-kicker">NEW COUNSEL</span><h1>새 상담 작성</h1><p>상담할 선생님과 유형을 선택하고 내용을 작성해 주세요.</p></div><a class="be-counsel-list-link" href="/mypage/sub09_04.aspx">상담 목록</a></section><section class="be-student-card be-counsel-form"><label><span>제목</span><input id="be-counsel-title" type="text" maxlength="100" placeholder="상담 제목을 입력하세요"></label><fieldset><legend>상담할 선생님</legend><div class="be-teacher-grid">${data.teachers.map((teacher,index)=>`<label><input type="radio" name="be-teacher" value="${escapeHtml(teacher.value)}" ${index===0?"checked":""}><span><img src="${escapeHtml(teacher.image)}" alt=""><strong>${escapeHtml(teacher.name)}</strong><small>${escapeHtml(teacher.subject||"담당 선생님")}</small></span></label>`).join("")}</div></fieldset><fieldset><legend>상담 유형</legend><div class="be-counsel-kind-badges">${data.kinds.map((kind)=>`<label><input type="radio" name="be-counsel-kind" value="${escapeHtml(kind.value)}"><span>${escapeHtml(kind.label)}</span></label>`).join("")}</div></fieldset><label><span>내용</span><textarea id="be-counsel-content" rows="9" placeholder="상담 내용을 구체적으로 작성해 주세요"></textarea><small>한글, 영문 및 일반적인 문장부호를 사용할 수 있습니다.</small></label><div class="be-counsel-form-actions"><a href="/mypage/sub09_04.aspx">취소</a><button type="button" class="be-counsel-submit">상담 등록</button></div></section>`);
     document.body.appendChild(root); bindStudentShell(root);
-    root.querySelector(".be-counsel-submit")?.addEventListener("click",()=>{ const title=root.querySelector("#be-counsel-title")?.value.trim(); const content=root.querySelector("#be-counsel-content")?.value.trim(); const kind=root.querySelector("#be-counsel-kind")?.value; const teacher=root.querySelector('input[name="be-teacher"]:checked')?.value; if(!title||title.length<3){alert("제목을 3자 이상 입력해 주세요.");return;} if(!teacher){alert("상담할 선생님을 선택해 주세요.");return;} if(!kind){alert("상담 유형을 선택해 주세요.");return;} if(!content){alert("상담 내용을 입력해 주세요.");return;} document.getElementById("txttitle").value=title; document.getElementById("txtcontent").value=content; document.getElementById("cmbkind").value=kind; const legacyTeacher=document.querySelector(`#rptContentList input[name="optteacher"][value="${CSS.escape(teacher)}"]`); if(legacyTeacher)legacyTeacher.checked=true; document.getElementById("Hteacheridx").value=teacher; triggerLegacyNode(document.getElementById("imgSave")); });
+    root.querySelector(".be-counsel-submit")?.addEventListener("click",()=>{ const title=root.querySelector("#be-counsel-title")?.value.trim(); const content=root.querySelector("#be-counsel-content")?.value.trim(); const kind=root.querySelector('input[name="be-counsel-kind"]:checked')?.value; const teacher=root.querySelector('input[name="be-teacher"]:checked')?.value; if(!title||title.length<3){alert("제목을 3자 이상 입력해 주세요.");return;} if(!teacher){alert("상담할 선생님을 선택해 주세요.");return;} if(!kind){alert("상담 유형을 선택해 주세요.");return;} if(!content){alert("상담 내용을 입력해 주세요.");return;} document.getElementById("txttitle").value=title; document.getElementById("txtcontent").value=content; document.getElementById("cmbkind").value=kind; const legacyTeacher=document.querySelector(`#rptContentList input[name="optteacher"][value="${CSS.escape(teacher)}"]`); if(legacyTeacher)legacyTeacher.checked=true; document.getElementById("Hteacheridx").value=teacher; triggerLegacyNode(document.getElementById("imgSave")); });
   }
 
   function readHomeworkPopup() {
@@ -684,6 +888,72 @@
     if(autoSaveItem){
       setTimeout(()=>{ showToast("Self Check를 매우만족으로 저장해요."); runLegacyAction(autoSaveItem.saveBridgeId,autoSaveItem.legacySave); },650);
     }
+  }
+
+  function readStudyQuestionPopup() {
+    const titleNode=document.getElementById("lblTitle");
+    const contentNode=document.getElementById("lblCont");
+    const problemId=new URLSearchParams(location.search).get("TestMunJaeIdx")||document.getElementById("HTestMunJaeIdx")?.value||"";
+    let questionNumber="";
+    let questionType="";
+    try {
+      const sourceLink=problemId&&window.opener?.document?.querySelector(`a[href*="fnMunJaeView(${CSS.escape(problemId)})"]`);
+      const sourceCells=Array.from(sourceLink?.closest("tr")?.cells||[]);
+      questionNumber=(clean(sourceLink?.textContent).match(/\d+번/)||[])[0]||"";
+      questionType=clean(sourceCells[5]?.textContent);
+    } catch {}
+    const content=contentNode?.cloneNode(true)||document.createElement("div");
+    content.querySelectorAll("script,style,input,button").forEach((node)=>node.remove());
+    const choicesNode=content.querySelector("ul");
+    const choiceText=clean(choicesNode?.textContent);
+    const choices=Array.from(choiceText.matchAll(/[①②③④⑤]/g),(match)=>match[0]);
+    const choiceLines=Array.from(choicesNode?.querySelectorAll("li")||[]).map((item)=>(item.innerText||item.textContent||"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").trim()).filter(Boolean);
+    choicesNode?.remove();
+    const raw=clean(content.textContent);
+    const answerMatch=raw.match(/답\s*:\s*([①②③④⑤]|\d+)\s*번?/i);
+    const answerRaw=answerMatch?.[1]||"";
+    const answer=/^\d+$/.test(answerRaw)?["①","②","③","④","⑤"][Number(answerRaw)-1]||answerRaw:answerRaw;
+    const walker=document.createTreeWalker(content,NodeFilter.SHOW_TEXT);
+    const nodes=[]; while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach((node)=>{ node.nodeValue=node.nodeValue.replace(/\s*답\s*:\s*(?:[①②③④⑤]|\d+)\s*번?\s*/gi," "); });
+    if(!questionType){
+      const title=clean(titleNode?.textContent);
+      questionType=/어법상|문법/.test(title)?"어법":/주제/.test(title)?"주제":/제목/.test(title)?"제목":/요지/.test(title)?"요지":/빈칸/.test(title)?"빈칸 추론":"";
+    }
+    return {titleHtml:titleNode?.innerHTML||"문제를 읽고 알맞은 답을 고르세요.",passageHtml:content.innerHTML,choices:choices.length?choices:["①","②","③","④","⑤"],choiceLines,answer,questionNumber,questionType};
+  }
+
+  function studyQuestionCopyText(root,data) {
+    const getText=(selector)=>{
+      const node=root.querySelector(selector)?.cloneNode(true);
+      if(!node)return "";
+      node.querySelectorAll("br").forEach((br)=>br.replaceWith("\n"));
+      node.querySelectorAll("p,div,li,blockquote").forEach((block)=>block.append("\n"));
+      return (node.textContent||"").replace(/\u00a0/g," ").replace(/[ \t]+\n/g,"\n").replace(/\n[ \t]+/g,"\n").replace(/[ \t]{2,}/g," ").replace(/\n{3,}/g,"\n\n").trim();
+    };
+    const choiceLines=(data.choiceLines||[]).filter((line)=>!/^\s*[①②③④⑤](?:\s+[①②③④⑤])*\s*$/.test(line));
+    return [
+      "심슨어학원",
+      [data.questionNumber&&`문제번호: ${data.questionNumber}`,data.questionType&&`문제유형: ${data.questionType}`].filter(Boolean).join("  |  "),
+      `[요구사항]\n${getText(".be-exam-question-head h1")}`,
+      `[지문]\n${getText(".be-exam-passage")}`,
+      choiceLines.length&&`[선택지]\n${choiceLines.join("\n")}`
+    ].filter(Boolean).join("\n\n");
+  }
+
+  function renderStudyQuestionPopup(data) {
+    const root=document.createElement("div");
+    root.id="better-esimson-root";
+    root.className="be-study-question-popup";
+    root.innerHTML=`<main class="be-exam-stage"><div class="be-exam-toolbar"><div><span>SIMSON MOCK EXAM</span><small>English Practice Paper</small></div><div><button class="be-exam-copy" type="button" data-exam-copy aria-label="문제 전체 복사" title="문제 전체 복사">${icon("copy")}<span>문제 복사</span></button><button type="button" data-exam-print aria-label="인쇄" title="인쇄">${icon("print")}</button><button type="button" data-exam-close aria-label="닫기" title="닫기">×</button></div></div><article class="be-exam-paper"><img class="be-exam-watermark" src="${symbolOutline}" alt=""><header class="be-exam-paper-header"><img src="${textLogo}" alt="SIMSON Language Institute"><div><strong>ENGLISH MOCK EXAM</strong><span>QUESTION ANALYSIS</span></div></header><div class="be-exam-paper-rule"><b>심슨 모의고사</b><span>${escapeHtml([data.questionNumber,data.questionType].filter(Boolean).join(" · ")||"어법 · 자주장")}</span></div><section class="be-exam-question-head"><div><span>QUESTION</span><strong>${escapeHtml(data.questionNumber||"문항")}</strong></div><h1>${data.titleHtml}</h1></section><section class="be-exam-passage">${data.passageHtml}</section><section class="be-exam-answer-options" aria-label="선택지">${data.choices.map((choice)=>`<span>${escapeHtml(choice)}</span>`).join("")}</section><footer class="be-exam-paper-footer"><span>SIMSON LANGUAGE INSTITUTE · Work Hard, No Short Cut.</span>${data.answer?`<strong>정답 <b>${escapeHtml(data.answer)}</b></strong>`:""}</footer></article></main>`;
+    document.body.appendChild(root);
+    root.querySelector("[data-exam-copy]")?.addEventListener("click",async()=>{
+      const question=studyQuestionCopyText(root,data);
+      try { await navigator.clipboard.writeText(question); showToast("문제지 형식으로 복사했어요."); }
+      catch { showToast("문제를 복사하지 못했어요.","error"); }
+    });
+    root.querySelector("[data-exam-print]")?.addEventListener("click",()=>window.print());
+    root.querySelector("[data-exam-close]")?.addEventListener("click",()=>window.close());
   }
 
   function submitLegacyLogin() {
@@ -819,6 +1089,11 @@
 
   if (isHomeworkPopup) {
     storageGet(["designEnabled","autoSelfCheck"],({designEnabled,autoSelfCheck})=>{ renderHomeworkPopup(readHomeworkPopup(),autoSelfCheck!==false); setModern(designEnabled!==false); });
+    return;
+  }
+  if (isStudyQuestionPopup) {
+    renderStudyQuestionPopup(readStudyQuestionPopup());
+    storageGet("designEnabled",({designEnabled})=>setModern(designEnabled!==false));
     return;
   }
   if (isHome) renderHome(readPage());
